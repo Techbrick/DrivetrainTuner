@@ -24,11 +24,21 @@ public class RobotMap {
   public static final int rightFollower = 15;
   public static boolean twoSpeedDrive = false;
 
-  private static  double kAngleSetpoint = 0.0;
-  private static  double kP = 0.005; // propotional turning constant
+  public static  double kAngleSetpoint = 0.0;
+  public static  double kP = 0.005; // propotional turning constant
   public static  double joystickDeadband = .05;
-  public static double driveEncoderTicksPerInch = 2048/6/3.14;
+  public static double driveEncoderTicksPerInch = 4096/6/3.14;
   public static double pidTurnDeadband = 2;
 
+  public static  double WHEEL_DIAMETER = 6;
+  public static  double ENCODER_PULSE_PER_REV = 4096;
+
+  public static  double distanceSetpoint = 0.0;
+  public static  double kdistance = 0.005; // propotional turning constant
+  public static double pidTDistDeadband = 2;
+
+  public static double encoderMovementThreshold = 40;
+  public static int shiftChannel = 0;
   
+
 }

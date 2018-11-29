@@ -7,13 +7,28 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.ExampleSubsystem;
+
+import java.util.function.Supplier;
+import com.ctre.phoenix.*;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.RemoteFeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -28,6 +43,25 @@ public class Robot extends TimedRobot {
 
   Command m_autonomousCommand;
   SendableChooser<Command> m_chooser = new SendableChooser<>();
+  Supplier<Double> leftEncoderPosition;
+	Supplier<Double> leftEncoderRate;
+	Supplier<Double> rightEncoderPosition;
+  Supplier<Double> rightEncoderRate;
+  
+  NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
+  NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
+  
+  Joystick stick;
+	
+	
+  private TalonSRX leftMaster;
+  private TalonSRX leftFollower;
+  private TalonSRX rightMaster;
+  private TalonSRX rightFollower;
+  
+
+  double priorAutospeed = 0;
+	Number[] numberArray = new Number[9];
 
   /**
    * This function is run when the robot is first started up and should be
@@ -39,6 +73,45 @@ public class Robot extends TimedRobot {
     m_chooser.addDefault("Default Auto", new ExampleCommand());
     // chooser.addObject("My Auto", new MyAutoCommand());
     SmartDashboard.putData("Auto mode", m_chooser);
+
+    stick = new Joystick(0);
+
+		leftMaster = new TalonSRX(RobotMap.leftMaster);
+    leftFollower = new TalonSRX(RobotMap.leftFollower);
+    rightMaster = new TalonSRX(RobotMap.rightMaster);
+    rightFollower  = new TalonSRX(RobotMap.rightFollower);
+    leftFollower.setInverted(true);
+    leftFollower.follow(leftMaster);
+    rightFollower.follow(rightMaster);
+    
+    leftMaster.clearStickyFaults(30);
+    rightMaster.clearStickyFaults(30);
+    leftMaster.setNeutralMode(NeutralMode.Brake);
+    leftMaster.setNeutralMode(NeutralMode.Brake);
+    leftFollower.clearStickyFaults(30);
+    rightFollower.clearStickyFaults(30);
+    leftFollower.setNeutralMode(NeutralMode.Brake);
+    rightFollower.setNeutralMode(NeutralMode.Brake);
+		//
+		// Configure drivetrain movement
+		//
+
+		
+    double encoderConstant = (1 / RobotMap.ENCODER_PULSE_PER_REV) * RobotMap.WHEEL_DIAMETER * Math.PI;
+
+		leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,0, 10);
+		leftEncoderPosition = () -> leftMaster.getSelectedSensorPosition(0) * encoderConstant;
+		leftEncoderRate = () -> leftMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
+		
+		rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
+		rightEncoderPosition = () -> rightMaster.getSelectedSensorPosition(0) * encoderConstant;
+		rightEncoderRate = () -> rightMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
+		
+		
+		// Set the update rate instead of using flush because of a ntcore bug
+		// -> probably don't want to do this on a robot in competition
+		NetworkTableInstance.getDefault().setUpdateRate(0.010);
+
   }
 
   /**
@@ -51,6 +124,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
+		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
+		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
+		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
   }
 
   /**
@@ -60,6 +137,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void disabledInit() {
+    leftMaster.set(ControlMode.PercentOutput, 0);
+    rightMaster.set(ControlMode.PercentOutput, 0);
   }
 
   @Override
