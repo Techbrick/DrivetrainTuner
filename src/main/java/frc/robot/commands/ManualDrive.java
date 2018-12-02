@@ -42,13 +42,7 @@ public class ManualDrive extends Command {
   // Make this return true when this Command no longer needs to run execute()
   @Override
   protected boolean isFinished() {
-    boolean done = _robot.stick.getRawButton(1);
-    if(done){
-        
-        SmartDashboard.putString("Status", "detected button push");
-       
-        return true;
-    }
+    
     return false;
   }
 

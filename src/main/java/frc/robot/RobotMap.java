@@ -39,6 +39,8 @@ public class RobotMap {
 
   public static double encoderMovementThreshold = 40;
   public static int shiftChannel = 0;
+
+  public static double minTurnPower = .15;
   
 
 }
