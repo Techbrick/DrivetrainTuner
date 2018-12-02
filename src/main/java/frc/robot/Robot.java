@@ -8,6 +8,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
@@ -27,6 +28,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.RemoteFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.kauailabs.navx.frc.AHRS;
 
 import org.omg.CORBA.PRIVATE_MEMBER;
 
@@ -58,11 +60,12 @@ public class Robot extends TimedRobot {
   public Joystick stick;
 	public  double encoderConstant;
 	
-  private TalonSRX leftMaster;
+  public TalonSRX leftMaster;
   private TalonSRX leftFollower;
-  private TalonSRX rightMaster;
+  public TalonSRX rightMaster;
   private TalonSRX rightFollower;
   public  DriveSubsystem driveTrain;
+  public AHRS navX;
 
   double priorAutospeed = 0;
 	Number[] numberArray = new Number[9];
@@ -74,9 +77,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     
-    m_chooser.addDefault("Default Auto", new ExampleCommand());
-    m_chooser.addObject("My Auto", new DriveEncoderCal(this));
-    SmartDashboard.putData("Auto mode", m_chooser);
+   
     SmartDashboard.putString("Instructions", "");
     SmartDashboard.putString("Status", "");
     stick = new Joystick(0);
@@ -99,26 +100,35 @@ public class Robot extends TimedRobot {
     rightFollower.setNeutralMode(NeutralMode.Brake);
 		//
 		// Configure drivetrain movement
-		//
-    driveTrain = new DriveSubsystem(leftMaster, rightMaster);
+    //
+    navX = new AHRS(SPI.Port.kMXP );
+    
+    driveTrain = new DriveSubsystem(this);
     SmartDashboard.putData(driveTrain);
     SmartDashboard.putData("DriveEncoderCal", new DriveEncoderCal(this));
+    SmartDashboard.putData("Manual Drive", new ManualDrive(this));
 		
-    double encoderConstant = (1 / RobotMap.ENCODER_PULSE_PER_REV) * RobotMap.WHEEL_DIAMETER * Math.PI;
+    double encoderConstant = (1 / RobotMap.driveEncoderTicksPerInch);
 
-		leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,0, 10);
+    leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,0, 10);
+    leftMaster.setSelectedSensorPosition(0, 0, 10);
 		leftEncoderPosition = () -> leftMaster.getSelectedSensorPosition(0) * encoderConstant;
 		leftEncoderRate = () -> leftMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
 		
-		rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
+    rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
+    rightMaster.setSensorPhase(true);
+    rightMaster.setSelectedSensorPosition(0, 0, 10);
 		rightEncoderPosition = () -> rightMaster.getSelectedSensorPosition(0) * encoderConstant;
 		rightEncoderRate = () -> rightMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
 		
-		
+    m_chooser.addDefault("Default Auto", new ExampleCommand(this));
+    m_chooser.addObject("Drive Encoder Cal", new DriveEncoderCal(this));
+    SmartDashboard.putData("Auto mode", m_chooser);
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
 		NetworkTableInstance.getDefault().setUpdateRate(0.010);
     m_oi = new OI();
+    navX.reset();
   }
 
   /**
@@ -131,6 +141,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    
     Logger();
   }
 
@@ -179,6 +190,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     Scheduler.getInstance().run();
+    Logger();
   }
 
   @Override
@@ -198,6 +210,9 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     Scheduler.getInstance().run();
+    double power =  stick.getY();
+    double twist = stick.getTwist();
+    //driveTrain.ArcadeDrive(power, twist);
   }
 
   /**
@@ -210,23 +225,50 @@ public class Robot extends TimedRobot {
 
   public double GetAverageEncoderPosition(){
     double left = leftEncoderPosition.get();
-    double right = leftEncoderPosition.get();
+    double right = rightEncoderPosition.get();
     double result = (left + right)/2;
     return result;
 
   }
   public double GetAverageEncoderRate(){
     double left = leftEncoderRate.get();
-    double right = leftEncoderRate.get();
+    double right = rightEncoderRate.get();
+    double result = (left + right)/2;
+    return result;
+
+  }
+  public double GetAverageEncoderPositionRaw(){
+    double left = leftMaster.getSelectedSensorPosition(0);
+    double right = rightMaster.getSelectedSensorPosition(0);
+    double result = (left + right)/2;
+    return result;
+
+  }
+  public double GetAverageEncoderRateRaw(){
+    double left = leftMaster.getSelectedSensorVelocity(0);
+    double right = rightMaster.getSelectedSensorVelocity(0);
     double result = (left + right)/2;
     return result;
 
   }
   private void Logger(){
-    SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
-		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
-		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
-		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+    SmartDashboard.putNumber("l_encoder_pos", Math.round(leftEncoderPosition.get()));
+		SmartDashboard.putNumber("l_encoder_rate", Math.round(leftEncoderRate.get()));
+		SmartDashboard.putNumber("r_encoder_pos", Math.round(rightEncoderPosition.get()));
+    SmartDashboard.putNumber("r_encoder_rate", Math.round(rightEncoderRate.get()));
+    double yaw = navX.getYaw();
+    boolean navxAlive = navX.isConnected();
+    SmartDashboard.putBoolean("navXConnected", navxAlive);
+    SmartDashboard.putNumber("navX yaw", Math.round(yaw));
+    SmartDashboard.putNumber("navx pitch", Math.round(navX.getPitch()));
+    SmartDashboard.putNumber("navx Heading", navX.getCompassHeading());
+    SmartDashboard.putNumber("navx Angle", Math.round(navX.getRawMagX()));
+    SmartDashboard.putBoolean("joystick buttom", stick.getRawButton(1));
+    double fps = GetAverageEncoderRate()*12;
+    SmartDashboard.putNumber("fps", fps);
+    SmartDashboard.putNumber("rEnc Raw", rightMaster.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("lEnc Raw", leftMaster.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("raw Enc Avg", GetAverageEncoderRateRaw());
   }
 
 }

@@ -7,8 +7,12 @@
 
 package frc.robot.commands;
 
+import java.util.logging.Logger;
+
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Helpers;
 import frc.robot.Robot;
 
 /**
@@ -29,26 +33,37 @@ public class DriveEncoderCal extends Command {
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    startingEncoderPosition = _robot.GetAverageEncoderPosition();
-    SmartDashboard.putString("Instructions", "Drive forward exactly 72 inches and when stoped press button 1");
+    startingEncoderPosition = _robot.GetAverageEncoderPositionRaw();
+    SmartDashboard.putString("Instructions", "Drive forward exactly 48 inches and when stoped press button 1");
     SmartDashboard.putString("Status", "Running Encoder Cal");
   }
 
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-      double power = _robot.stick.getY();
-      _robot.driveTrain.Move(power, power);
+    
+    if(_robot == null){
+        DriverStation.reportError("_robot is null", false);
+        SmartDashboard.putString("Status", "_robot is null");
+    }else{
+       // SmartDashboard.putString("Status", "Running Encoder Cal execute");
+
+        double power = Helpers.DeadbandJoystick(_robot.stick.getY());
+        SmartDashboard.putString("Status", "Running Encoder Cal execute stick "+ Double.toString(power));
+        _robot.driveTrain.Move(power, power);
+    }
+      
   }
 
   // Make this return true when this Command no longer needs to run execute()
   @Override
   protected boolean isFinished() {
+    
     boolean done = _robot.stick.getRawButton(1);
     if(done){
         
         SmartDashboard.putString("Status", "Calculating Encoder Cal");
-        endingEncoderPosition = _robot.GetAverageEncoderPosition();
+        endingEncoderPosition = _robot.GetAverageEncoderPositionRaw();
     
         return true;
     }
@@ -58,14 +73,15 @@ public class DriveEncoderCal extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
-    double ticksPerInch = (endingEncoderPosition - startingEncoderPosition)/72;
+    SmartDashboard.putString("Status", "Calculating Encoder Cal");
+    double ticksPerInch = (endingEncoderPosition - startingEncoderPosition)/48;
     
     if(ticksPerInch == 0){
         SmartDashboard.putString("Instructions", "Your should check the connections and configuration of your encoders");
         SmartDashboard.putString("Status", "ERROR - There was no change in encoder position detected");
     }else{
         SmartDashboard.putString("Instructions", "Your should update your stored contants to the new value");
-        SmartDashboard.putString("Status", "Calculated Encoder Cal as " + String.format( "%.2f", ticksPerInch ) + "ticks per inch");
+        SmartDashboard.putString("Status", "Calculated Encoder Cal: " + String.valueOf( ticksPerInch ) + "ticks per inch");
         SmartDashboard.putNumber("Endcoder Ticks/In", ticksPerInch);
         _robot.encoderConstant =1/ticksPerInch;
     }
@@ -76,5 +92,19 @@ public class DriveEncoderCal extends Command {
   // subsystems is scheduled to run
   @Override
   protected void interrupted() {
+    SmartDashboard.putString("Status", "Calculating Encoder Cal");
+    endingEncoderPosition = _robot.GetAverageEncoderPositionRaw();
+    
+    double ticksPerInch = (endingEncoderPosition - startingEncoderPosition)/48;
+    
+    if(ticksPerInch == 0){
+        SmartDashboard.putString("Instructions", "Your should check the connections and configuration of your encoders");
+        SmartDashboard.putString("Status", "ERROR - There was no change in encoder position detected");
+    }else{
+        SmartDashboard.putString("Instructions", "Your should update your stored contants to the new value");
+        SmartDashboard.putString("Status", "Calculated Int Encoder Cal: " + String.valueOf( ticksPerInch ) + "ticks per inch");
+        SmartDashboard.putNumber("Endcoder Ticks/In", ticksPerInch);
+        _robot.encoderConstant =1/ticksPerInch;
+    }
   }
 }
