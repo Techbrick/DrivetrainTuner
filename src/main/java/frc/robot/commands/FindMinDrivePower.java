@@ -20,12 +20,12 @@ import frc.robot.RobotMap;
 /**
  * An example command.  You can replace me with your own command.
  */
-public class FindMinTurnPower extends Command {
+public class FindMinDrivePower extends Command {
     
     private Robot _robot;
-    private double minLeftTurn;
-    private double minRightTurn;
-    private double avgTurnPower;
+    private double minFrontDrive;
+    private double minRearDrive;
+    
     private Integer testPowerLevel;
     private Integer powerCounter;
     private Integer powerLevelTimer;
@@ -33,7 +33,7 @@ public class FindMinTurnPower extends Command {
     private boolean secondTurn = false;
     private boolean testCompleted;
 
-  public FindMinTurnPower(Robot robot) {
+  public FindMinDrivePower(Robot robot) {
     // Use requires() here to declare subsystem dependencies
     _robot = robot;
     requires(_robot.driveTrain);
@@ -56,12 +56,12 @@ public class FindMinTurnPower extends Command {
     PowerLevelTimeout = 50;
     secondTurn = false;
     testCompleted = false;
-    minRightTurn = 0;
-    minLeftTurn = 0;
-    avgTurnPower = 0;
-    SmartDashboard.putString("Status", "Determined Min Left: "+ Double.toString(testPowerLevel) + "%");
-    SmartDashboard.putNumber("Min left right power", minRightTurn);
-    SmartDashboard.putNumber("Avg Min Turn Pwr", avgTurnPower);
+    minFrontDrive = 0;
+    minRearDrive = 0;
+    
+    SmartDashboard.putString("Status", "Determined Min FWD PWR: "+ Double.toString(testPowerLevel) + "%");
+    SmartDashboard.putNumber("Min fwd PWR", minFrontDrive);
+    SmartDashboard.putNumber("Min rvs Pwr", minRearDrive);
   }
 
   // Called repeatedly when this Command is scheduled to run
@@ -76,17 +76,17 @@ public class FindMinTurnPower extends Command {
     if(secondTurn){
         power = - power;
     }
-    _robot.driveTrain.Move(power, -power);
-    int currentPosition = _robot.leftMaster.getSelectedSensorPosition(0);
+    _robot.driveTrain.Move(power, power);
+    double currentPosition = _robot.GetAverageEncoderPositionRaw();
     if(Math.abs(currentPosition) > 200){
         if(!secondTurn){
-            minLeftTurn = testPowerLevel/100;
-            SmartDashboard.putString("Status", "Determined Min Left: "+ Double.toString(testPowerLevel) + "%");
-            SmartDashboard.putNumber("Min left turn power", minLeftTurn);
+            minFrontDrive = testPowerLevel/100;
+            SmartDashboard.putString("Status", "Determined Min FWD: "+ Double.toString(testPowerLevel) + "%");
+            SmartDashboard.putNumber("Min fwd PWR", minFrontDrive);
         }else{
-            minRightTurn = testPowerLevel/100;
+            minRearDrive = testPowerLevel/100;
             SmartDashboard.putString("Status", "Determined Min Right: "+ Double.toString(testPowerLevel) + "%");
-            SmartDashboard.putNumber("Min left right power", minRightTurn);
+            SmartDashboard.putNumber("Min rvs Pwr", minRearDrive);
             testCompleted = true;
         }
         moving = true;
@@ -96,7 +96,7 @@ public class FindMinTurnPower extends Command {
         powerLevelTimer = 0;
         testPowerLevel = 2;
         secondTurn = true;
-        _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
+
     }else if(!moving){
 
         powerLevelTimer ++;
@@ -114,12 +114,12 @@ public class FindMinTurnPower extends Command {
     
     boolean done = _robot.stick.getRawButton(1) || testCompleted;
     if(done){
-        if(minLeftTurn > minRightTurn){
-            RobotMap.minTurnPower = minLeftTurn;
+        if(minFrontDrive > minFrontDrive){
+            RobotMap.minDrivePower = minFrontDrive;
         }else{
-            RobotMap.minTurnPower = minRightTurn;
+            RobotMap.minTurnPower = minFrontDrive;
         }
-        SmartDashboard.putString("Status", "Determined Min Turn Power: "+ Double.toString(RobotMap.minTurnPower) + "%");
+        SmartDashboard.putString("Status", "Determined Min Drive Power: "+ Double.toString(RobotMap.minDrivePower) + "%");
         return true;
     }
     return false;

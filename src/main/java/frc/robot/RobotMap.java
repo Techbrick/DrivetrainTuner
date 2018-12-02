@@ -41,6 +41,7 @@ public class RobotMap {
   public static int shiftChannel = 0;
 
   public static double minTurnPower = .15;
+  public static double minDrivePower = .15;
   
 
 }
