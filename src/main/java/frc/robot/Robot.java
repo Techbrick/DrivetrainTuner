@@ -15,7 +15,8 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.commands.ExampleCommand;
+import frc.robot.commands.*;
+import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.ExampleSubsystem;
 
 import java.util.function.Supplier;
@@ -26,6 +27,9 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.RemoteFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
+import org.omg.CORBA.PRIVATE_MEMBER;
+
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -40,7 +44,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 public class Robot extends TimedRobot {
   public static ExampleSubsystem m_subsystem = new ExampleSubsystem();
   public static OI m_oi;
-
+  RobotMap _robotMap = new RobotMap();
   Command m_autonomousCommand;
   SendableChooser<Command> m_chooser = new SendableChooser<>();
   Supplier<Double> leftEncoderPosition;
@@ -51,14 +55,14 @@ public class Robot extends TimedRobot {
   NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
   NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
   
-  Joystick stick;
-	
+  public Joystick stick;
+	public  double encoderConstant;
 	
   private TalonSRX leftMaster;
   private TalonSRX leftFollower;
   private TalonSRX rightMaster;
   private TalonSRX rightFollower;
-  
+  public  DriveSubsystem driveTrain;
 
   double priorAutospeed = 0;
 	Number[] numberArray = new Number[9];
@@ -69,11 +73,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_oi = new OI();
+    
     m_chooser.addDefault("Default Auto", new ExampleCommand());
-    // chooser.addObject("My Auto", new MyAutoCommand());
+    m_chooser.addObject("My Auto", new DriveEncoderCal(this));
     SmartDashboard.putData("Auto mode", m_chooser);
-
+    SmartDashboard.putString("Instructions", "");
+    SmartDashboard.putString("Status", "");
     stick = new Joystick(0);
 
 		leftMaster = new TalonSRX(RobotMap.leftMaster);
@@ -95,7 +100,7 @@ public class Robot extends TimedRobot {
 		//
 		// Configure drivetrain movement
 		//
-
+    driveTrain = new DriveSubsystem(leftMaster, rightMaster);
 		
     double encoderConstant = (1 / RobotMap.ENCODER_PULSE_PER_REV) * RobotMap.WHEEL_DIAMETER * Math.PI;
 
@@ -111,7 +116,7 @@ public class Robot extends TimedRobot {
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
 		NetworkTableInstance.getDefault().setUpdateRate(0.010);
-
+    m_oi = new OI();
   }
 
   /**
@@ -207,4 +212,21 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
   }
+  //   this function is needed for commands to read position;
+
+  public double GetAverageEncoderPosition(){
+    double left = leftEncoderPosition.get();
+    double right = leftEncoderPosition.get();
+    double result = (left + right)/2;
+    return result;
+
+  }
+  public double GetAverageEncoderRate(){
+    double left = leftEncoderRate.get();
+    double right = leftEncoderRate.get();
+    double result = (left + right)/2;
+    return result;
+
+  }
+
 }
