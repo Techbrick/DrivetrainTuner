@@ -101,6 +101,8 @@ public class Robot extends TimedRobot {
 		// Configure drivetrain movement
 		//
     driveTrain = new DriveSubsystem(leftMaster, rightMaster);
+    SmartDashboard.putData(driveTrain);
+    SmartDashboard.putData("DriveEncoderCal", new DriveEncoderCal(this));
 		
     double encoderConstant = (1 / RobotMap.ENCODER_PULSE_PER_REV) * RobotMap.WHEEL_DIAMETER * Math.PI;
 
@@ -129,10 +131,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
-		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
-		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
-		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+    Logger();
   }
 
   /**
@@ -166,12 +165,7 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     m_autonomousCommand = m_chooser.getSelected();
 
-    /*
-     * String autoSelected = SmartDashboard.getString("Auto Selector",
-     * "Default"); switch(autoSelected) { case "My Auto": autonomousCommand
-     * = new MyAutoCommand(); break; case "Default Auto": default:
-     * autonomousCommand = new ExampleCommand(); break; }
-     */
+    
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
@@ -227,6 +221,12 @@ public class Robot extends TimedRobot {
     double result = (left + right)/2;
     return result;
 
+  }
+  private void Logger(){
+    SmartDashboard.putNumber("l_encoder_pos", leftEncoderPosition.get());
+		SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
+		SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
+		SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
   }
 
 }
