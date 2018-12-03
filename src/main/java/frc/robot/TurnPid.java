@@ -36,7 +36,7 @@ public class TurnPid{
 
         if(start){
 
-            SmartDashboard.putString("PidStatus", "Started New PidTurn Class");
+            SmartDashboard.putString("Pid t Status", "Started New PidTurn Class");
         }
         double angle_error = currentAngle - _targetAngle; //calculate error
         angle_error = Math.abs(angle_error) > 180 ? 180 - angle_error : angle_error; //scale error to take shortest path
@@ -58,13 +58,13 @@ public class TurnPid{
       
       
       
-        angleOutput = Math.abs(angleOutput) < _minTurnPower ? Math.copySign(.14, angleOutput) : angleOutput; //if angleOutput is below min, set to min
+        angleOutput = Math.abs(angleOutput) < _minTurnPower ? Math.copySign(_minTurnPower, angleOutput) : angleOutput; //if angleOutput is below min, set to min
         angleOutput = Math.abs(angleOutput) > .9 ? Math.copySign(.9, angleOutput) : angleOutput; //if angleOutput is above max, set to max
         //angleOutput = angle_error < 0 ? angleOutput : -angleOutput;
         if (Math.abs(angle_error) < _deadband) { //if done moving
             i_Angle = 0;
             angleOutput = 0;
-            SmartDashboard.putString("PidStatus", "PidTurn Class completed");
+            SmartDashboard.putString("Pid t Status", "PidTurn Class completed");
         }
         angleOutput = -angleOutput;
         

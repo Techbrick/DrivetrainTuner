@@ -105,8 +105,13 @@ public class Robot extends TimedRobot {
     
     driveTrain = new DriveSubsystem(this);
     SmartDashboard.putData(driveTrain);
-    SmartDashboard.putData("DriveEncoderCal", new DriveEncoderCal(this));
+    SmartDashboard.putData("Drive Encoder Cal", new DriveEncoderCal(this));
     SmartDashboard.putData("Manual Drive", new ManualDrive(this));
+    SmartDashboard.putData("Min Turn Power", new FindMinTurnPower(this));
+    SmartDashboard.putData("Min Drive Power", new FindMinDrivePower(this));
+    SmartDashboard.putData("Tune Turn Pid", new TuneTurnPid(this));
+    SmartDashboard.putData("Tune Distance Pid", new TuneDistancePid(this));
+
 		
     double encoderConstant = (1 / RobotMap.driveEncoderTicksPerInch);
 
@@ -129,6 +134,7 @@ public class Robot extends TimedRobot {
 		NetworkTableInstance.getDefault().setUpdateRate(0.010);
     m_oi = new OI();
     navX.reset();
+    navX.zeroYaw();
   }
 
   /**
