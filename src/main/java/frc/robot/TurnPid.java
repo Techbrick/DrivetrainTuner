@@ -39,11 +39,16 @@ public class TurnPid{
             SmartDashboard.putString("Pid t Status", "Started New PidTurn Class");
         }
         double angle_error = currentAngle - _targetAngle; //calculate error
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST angle error", angle_error);
+        }
         angle_error = Math.abs(angle_error) > 180 ? 180 - angle_error : angle_error; //scale error to take shortest path
         if (_targetAngle == 0 && currentAngle > 180) {
                 angle_error = currentAngle - 360;
         }
-      
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST angle error corr", angle_error);
+        }
         double p_Angle = _kp * angle_error; //calculate p
         _accumulatedI += _ki * (angle_error * _interval); //calculate i
         double i_Angle = _ki*_accumulatedI;
@@ -55,19 +60,23 @@ public class TurnPid{
         
         double angleOutput = p_Angle + i_Angle + d_Angle; //calculate output
         _lastError = angle_error; //set last angle error for d value
-      
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST angle pwr Raw", angleOutput);
+        }
       
       
         angleOutput = Math.abs(angleOutput) < _minTurnPower ? Math.copySign(_minTurnPower, angleOutput) : angleOutput; //if angleOutput is below min, set to min
-        angleOutput = Math.abs(angleOutput) > .9 ? Math.copySign(.9, angleOutput) : angleOutput; //if angleOutput is above max, set to max
+        angleOutput = Math.abs(angleOutput) > RobotMap.maxPidPower ? Math.copySign(RobotMap.maxPidPower, angleOutput) : angleOutput; //if angleOutput is above max, set to max
         //angleOutput = angle_error < 0 ? angleOutput : -angleOutput;
         if (Math.abs(angle_error) < _deadband) { //if done moving
             i_Angle = 0;
             angleOutput = 0;
             SmartDashboard.putString("Pid t Status", "PidTurn Class completed");
         }
-        angleOutput = -angleOutput;
-        
+        //angleOutput = -angleOutput;
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST angle pwr ", angleOutput);
+        }
       
         return angleOutput;
       }

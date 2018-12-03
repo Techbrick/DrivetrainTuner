@@ -47,12 +47,12 @@ public class TestMoveFwd48 extends Command {
     
     _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
     _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-    SmartDashboard.putString("Instructions", "The Robot will move fwd 48 inches, you can press button 1 to stop");
+    SmartDashboard.putString("Instructions", "The Robot will move fwd 48 inches, you can press button 2 to stop");
     SmartDashboard.putString("Status", "Running move fwd 48 inches");
     testCompleted = false;
     stoppedCounter = 0;
     _distancePid = new DistancePid(RobotMap.kdistance, 0, 0, RobotMap.minDrivePower, .002, 1, _robot);
-    _distancePid.SetTargetDistance(48);
+    _distancePid.SetTargetDistance(24);
     _timer = new Timer();
     _timer.start();
     _startTime = _timer.get();
@@ -62,23 +62,24 @@ public class TestMoveFwd48 extends Command {
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    double power = _distancePid.GetDistancePidOutput();
-    _robot.driveTrain.Move(power, power); 
-    if (power == 0){
-        stoppedCounter ++;
-        if(stoppedCounter == 1){
+    if(_robot.stick.getRawButton(1)){
+        double power = _distancePid.GetDistancePidOutput();
+        _robot.driveTrain.Move(power, power); 
+        if (power == 0){
+            stoppedCounter ++;
+            if(stoppedCounter == 1){
 
-            SmartDashboard.putNumber("test time", _timer.get());
-          }
-    }else{
-        stoppedCounter = 0;
-        SmartDashboard.putNumber("test time", 0);
-    }
-    if (stoppedCounter > 25){
-        testCompleted = true;
-    }
+                SmartDashboard.putNumber("test time", _timer.get());
+            }
+        }else{
+            stoppedCounter = 0;
+            SmartDashboard.putNumber("test time", 0);
+        }
+        if (stoppedCounter > 25){
+            testCompleted = true;
+        }
 
-    
+    }
   
   }
 
@@ -86,7 +87,7 @@ public class TestMoveFwd48 extends Command {
   @Override
   protected boolean isFinished() {
     
-    boolean done = _robot.stick.getRawButton(1) || testCompleted;
+    boolean done = _robot.stick.getRawButton(2) || testCompleted;
     if(done){
         
         SmartDashboard.putString("Status", "Completed move forward 48 inches");

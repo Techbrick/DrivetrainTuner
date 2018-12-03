@@ -43,7 +43,9 @@ public class DistancePid{
             SmartDashboard.putString("Pid D Status", "Started New PidDistance Class");
         }
         double distance_error = _targetDistance - _robot.GetAverageEncoderPosition(); //calculate error
-        
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST dist error", distance_error);
+        }
         double p_Distance = _kp * distance_error; //calculate p
         _accumulatedI += _ki * (distance_error * _interval); //calculate i
         double i_Distance = _ki*_accumulatedI;
@@ -56,17 +58,21 @@ public class DistancePid{
         double distancePowerOutput = p_Distance + i_Distance + d_Distance; //calculate output
         _lastError = distance_error; //set last angle error for d value
       
-      
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST angle pwr Raw", distancePowerOutput);
+        }
       
         distancePowerOutput = Math.abs(distancePowerOutput) < _minDrivePower ? Math.copySign(_minDrivePower, distancePowerOutput) : distancePowerOutput; //if distancePowerOutput is below min, set to min
-        distancePowerOutput = Math.abs(distancePowerOutput) > .9 ? Math.copySign(.9, distancePowerOutput) : distancePowerOutput; //if distancePowerOutput is above max, set to max
+        distancePowerOutput = Math.abs(distancePowerOutput) > RobotMap.maxPidPower ? Math.copySign(RobotMap.maxPidPower, distancePowerOutput) : distancePowerOutput; //if distancePowerOutput is above max, set to max
         
         if (Math.abs(distance_error) < _deadband) { //if done moving
             i_Distance = 0;
             distancePowerOutput = 0;
-            SmartDashboard.putString("Pid D Status", "Started New PidDistance Class");
+            SmartDashboard.putString("Pid D Status", "ended PidDistance Class");
         }
-        
+        if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST distance pwr ", distancePowerOutput);
+        }
         return distancePowerOutput;
       }
 

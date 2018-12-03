@@ -48,7 +48,7 @@ public class TestTurnLeft90 extends Command {
     
     _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
     _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-    SmartDashboard.putString("Instructions", "The Robot will turn left 90 degrees, you can press button 1 to stop");
+    SmartDashboard.putString("Instructions", "The Robot will turn left 90 degrees, you can press button 2 to stop");
     SmartDashboard.putString("Status", "Running turn left 90 degrees");
     testCompleted = false;
     _robot.navX.reset();
@@ -64,29 +64,33 @@ public class TestTurnLeft90 extends Command {
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    double power = _turnPid.GetAnglePidOutput(_robot.navX.getYaw());
-    _robot.driveTrain.Move(power, -power); 
-    if (power == 0){
-        stoppedCounter ++;
-        if(stoppedCounter == 1){
+    if(_robot.stick.getRawButton(1)){
+      double power = _turnPid.GetAnglePidOutput(_robot.navX.getYaw());
+      
+      _robot.driveTrain.Move(power, -power); 
+      if (power == 0){
+          stoppedCounter ++;
+          if(stoppedCounter == 1){
 
-          SmartDashboard.putNumber("test time", _timer.get());
-        }
-    }else{
-        stoppedCounter = 0;
-        SmartDashboard.putNumber("test time", 0);
-    }
-    if (stoppedCounter > 25){
-        testCompleted = true;
-    }
+            SmartDashboard.putNumber("test time", _timer.get());
+          }
+      }else{
+          stoppedCounter = 0;
+          SmartDashboard.putNumber("test time", 0);
+      }
+      if (stoppedCounter > 25){
+          testCompleted = true;
+      }
 
+    }
+    
   }
 
   // Make this return true when this Command no longer needs to run execute()
   @Override
   protected boolean isFinished() {
     
-    boolean done = _robot.stick.getRawButton(1) || testCompleted;
+    boolean done = _robot.stick.getRawButton(2) || testCompleted;
     if(done){
         
         SmartDashboard.putString("Status", "Completed turn left 90");

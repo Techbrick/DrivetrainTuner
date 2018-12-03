@@ -37,11 +37,19 @@ public class RobotMap {
   public static  double kdistance = 0.005; // propotional turning constant
   public static double pidTDistDeadband = 2;
 
-  public static double encoderMovementThreshold = 40;
+  public static double encoderMovementThreshold = 200;
   public static int shiftChannel = 0;
 
   public static double minTurnPower = .15;
   public static double minDrivePower = .15;
-  
+  public static double maxPidPower = .3;
+  public static boolean verbose = true;
+  public static double maxVelocity = 0;
+  public static double maxAccel = 0;
+  public static double fpsPerVolt = 0;
+  public static double accelPerVolt = 0;
+  public static int averageCounterVel = 0;
+  public static int averageCounterAccel = 0;
+
 
 }

@@ -8,6 +8,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -81,7 +82,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putString("Instructions", "");
     SmartDashboard.putString("Status", "");
     stick = new Joystick(0);
-
+    RobotMap.verbose = true;
 		leftMaster = new TalonSRX(RobotMap.leftMaster);
     leftFollower = new TalonSRX(RobotMap.leftFollower);
     rightMaster = new TalonSRX(RobotMap.rightMaster);
@@ -111,6 +112,10 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Min Drive Power", new FindMinDrivePower(this));
     SmartDashboard.putData("Tune Turn Pid", new TuneTurnPid(this));
     SmartDashboard.putData("Tune Distance Pid", new TuneDistancePid(this));
+    SmartDashboard.putData("Turn left 90", new TestTurnLeft90(this));
+    SmartDashboard.putData("Test Turn Right 90", new TestTurnRight90(this));
+    SmartDashboard.putData("Test Fwd 48", new TestMoveFwd48(this));
+    SmartDashboard.putData("Test back 48", new TestMoveBack48(this));
 
 		
     double encoderConstant = (1 / RobotMap.driveEncoderTicksPerInch);
@@ -131,7 +136,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto mode", m_chooser);
 		// Set the update rate instead of using flush because of a ntcore bug
 		// -> probably don't want to do this on a robot in competition
-		NetworkTableInstance.getDefault().setUpdateRate(0.010);
+    NetworkTableInstance.getDefault().setUpdateRate(0.010);
+    
     m_oi = new OI();
     navX.reset();
     navX.zeroYaw();
@@ -225,7 +231,19 @@ public class Robot extends TimedRobot {
    * This function is called periodically during test mode.
    */
   @Override
+  public void testInit() {
+    super.testInit();
+    // 
+    RobotMap.verbose = true;
+  }
+
+  @Override
   public void testPeriodic() {
+    Scheduler.getInstance().run();
+    Logger();
+    
+
+
   }
   //   this function is needed for commands to read position;
 
@@ -258,23 +276,25 @@ public class Robot extends TimedRobot {
 
   }
   private void Logger(){
-    SmartDashboard.putNumber("l_encoder_pos", Math.round(leftEncoderPosition.get()));
-		SmartDashboard.putNumber("l_encoder_rate", Math.round(leftEncoderRate.get()));
-		SmartDashboard.putNumber("r_encoder_pos", Math.round(rightEncoderPosition.get()));
-    SmartDashboard.putNumber("r_encoder_rate", Math.round(rightEncoderRate.get()));
+    if(RobotMap.verbose){
+      SmartDashboard.putNumber("l_encoder_pos", Math.round(leftEncoderPosition.get()));
+      SmartDashboard.putNumber("l_encoder_rate", Math.round(leftEncoderRate.get()));
+      SmartDashboard.putNumber("r_encoder_pos", Math.round(rightEncoderPosition.get()));
+      SmartDashboard.putNumber("r_encoder_rate", Math.round(rightEncoderRate.get()));
+      SmartDashboard.putNumber("navx pitch", Math.round(navX.getPitch()));
+      SmartDashboard.putNumber("navx Heading", navX.getCompassHeading());
+      SmartDashboard.putNumber("navx Angle", Math.round(navX.getRawMagX()));
+    }
+    
     double yaw = navX.getYaw();
     boolean navxAlive = navX.isConnected();
     SmartDashboard.putBoolean("navXConnected", navxAlive);
     SmartDashboard.putNumber("navX yaw", Math.round(yaw));
-    SmartDashboard.putNumber("navx pitch", Math.round(navX.getPitch()));
-    SmartDashboard.putNumber("navx Heading", navX.getCompassHeading());
-    SmartDashboard.putNumber("navx Angle", Math.round(navX.getRawMagX()));
-    SmartDashboard.putBoolean("joystick buttom", stick.getRawButton(1));
+    
+    //SmartDashboard.putBoolean("joystick buttom", stick.getRawButton(1));
     double fps = GetAverageEncoderRate()*12;
     SmartDashboard.putNumber("fps", fps);
-    SmartDashboard.putNumber("rEnc Raw", rightMaster.getSelectedSensorPosition(0));
-    SmartDashboard.putNumber("lEnc Raw", leftMaster.getSelectedSensorPosition(0));
-    SmartDashboard.putNumber("raw Enc Avg", GetAverageEncoderRateRaw());
+    
   }
 
 }
