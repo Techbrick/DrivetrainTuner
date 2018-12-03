@@ -27,7 +27,7 @@ public class DriveSubsystem extends Subsystem {
   public void Move(double leftpower, double rightpower){
     _leftMasterTalon.set(ControlMode.PercentOutput, leftpower);
     _rightMasterTalon.set(ControlMode.PercentOutput, -rightpower);
-    SmartDashboard.putString("DriveTrainStatus", "Move power: "+ Double.toString(leftpower));
+    SmartDashboard.putString("DriveTrainStatus", "Move power: "+ Double.toString(leftpower) + ", " + Double.toString(rightpower));
   }
   public void ArcadeDrive(double power, double turn){
     double turnPower = turn/2;

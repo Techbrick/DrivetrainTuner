@@ -44,7 +44,9 @@ public class DistancePid{
         }
         double distance_error = _targetDistance - _robot.GetAverageEncoderPosition(); //calculate error
         if(RobotMap.verbose){
+            SmartDashboard.putNumber("TEST target dist", _targetDistance);
             SmartDashboard.putNumber("TEST dist error", distance_error);
+            SmartDashboard.putNumber("test Current Position", _robot.GetAverageEncoderPosition());
         }
         double p_Distance = _kp * distance_error; //calculate p
         _accumulatedI += _ki * (distance_error * _interval); //calculate i
@@ -59,7 +61,7 @@ public class DistancePid{
         _lastError = distance_error; //set last angle error for d value
       
         if(RobotMap.verbose){
-            SmartDashboard.putNumber("TEST angle pwr Raw", distancePowerOutput);
+            SmartDashboard.putNumber("TEST DIST pwr Raw", distancePowerOutput);
         }
       
         distancePowerOutput = Math.abs(distancePowerOutput) < _minDrivePower ? Math.copySign(_minDrivePower, distancePowerOutput) : distancePowerOutput; //if distancePowerOutput is below min, set to min

@@ -122,11 +122,12 @@ public class Robot extends TimedRobot {
 
     leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,0, 10);
     leftMaster.setSelectedSensorPosition(0, 0, 10);
+    leftMaster.setSensorPhase(true);
 		leftEncoderPosition = () -> leftMaster.getSelectedSensorPosition(0) * encoderConstant;
 		leftEncoderRate = () -> leftMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
 		
     rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
-    rightMaster.setSensorPhase(true);
+    
     rightMaster.setSelectedSensorPosition(0, 0, 10);
 		rightEncoderPosition = () -> rightMaster.getSelectedSensorPosition(0) * encoderConstant;
 		rightEncoderRate = () -> rightMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
@@ -278,12 +279,13 @@ public class Robot extends TimedRobot {
   private void Logger(){
     if(RobotMap.verbose){
       SmartDashboard.putNumber("l_encoder_pos", Math.round(leftEncoderPosition.get()));
-      SmartDashboard.putNumber("l_encoder_rate", Math.round(leftEncoderRate.get()));
+      // SmartDashboard.putNumber("l_encoder_rate", Math.round(leftEncoderRate.get()));
       SmartDashboard.putNumber("r_encoder_pos", Math.round(rightEncoderPosition.get()));
-      SmartDashboard.putNumber("r_encoder_rate", Math.round(rightEncoderRate.get()));
+      // SmartDashboard.putNumber("r_encoder_rate", Math.round(rightEncoderRate.get()));
       SmartDashboard.putNumber("navx pitch", Math.round(navX.getPitch()));
       SmartDashboard.putNumber("navx Heading", navX.getCompassHeading());
       SmartDashboard.putNumber("navx Angle", Math.round(navX.getRawMagX()));
+      SmartDashboard.putNumber("avgEncoderRate", GetAverageEncoderRate());
     }
     
     double yaw = navX.getYaw();

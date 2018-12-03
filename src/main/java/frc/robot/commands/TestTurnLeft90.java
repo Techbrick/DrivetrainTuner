@@ -46,13 +46,13 @@ public class TestTurnLeft90 extends Command {
   @Override
   protected void initialize() {
     
-    _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+    // _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
+    // _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
     SmartDashboard.putString("Instructions", "The Robot will turn left 90 degrees, you can press button 2 to stop");
     SmartDashboard.putString("Status", "Running turn left 90 degrees");
     testCompleted = false;
-    _robot.navX.reset();
-    _robot.navX.zeroYaw();
+    // _robot.navX.reset();
+    // _robot.navX.zeroYaw();
     stoppedCounter = 0;
     _turnPid = new TurnPid(RobotMap.kp_Angle, 0, 0, RobotMap.minTurnPower, .002, 2);
     _turnPid.SetTargetAngle(270);
@@ -67,7 +67,7 @@ public class TestTurnLeft90 extends Command {
     if(_robot.stick.getRawButton(1)){
       double power = _turnPid.GetAnglePidOutput(_robot.navX.getYaw());
       
-      _robot.driveTrain.Move(power, -power); 
+      _robot.driveTrain.Move(-power, power); 
       if (power == 0){
           stoppedCounter ++;
           if(stoppedCounter == 1){
@@ -83,6 +83,9 @@ public class TestTurnLeft90 extends Command {
       }
 
     }
+    else{
+      _robot.driveTrain.Move(0, 0); 
+  }
     
   }
 
@@ -103,7 +106,7 @@ public class TestTurnLeft90 extends Command {
   @Override
   protected void end() {
     
-    
+    _robot.driveTrain.Move(0, 0); 
   }
 
   // Called when another command which requires one or more of the same

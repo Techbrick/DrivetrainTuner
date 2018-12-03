@@ -11,6 +11,7 @@ import java.util.Stack;
 import java.util.logging.Logger;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Helpers;
@@ -32,6 +33,7 @@ public class FindMinDrivePower extends Command {
     private Integer PowerLevelTimeout;
     private boolean secondTurn = false;
     private boolean testCompleted;
+    private Timer _timer;
 
   public FindMinDrivePower(Robot robot) {
     // Use requires() here to declare subsystem dependencies
@@ -53,12 +55,12 @@ public class FindMinDrivePower extends Command {
     testPowerLevel = 2;
     powerCounter = 0;
     powerLevelTimer = 0;
-    PowerLevelTimeout = 50;
+    PowerLevelTimeout = 100;
     secondTurn = false;
     testCompleted = false;
     minFrontDrive = 0;
     minRearDrive = 0;
-    
+    _timer = new Timer();
     SmartDashboard.putString("Status", "Determined Min FWD PWR: "+ Double.toString(testPowerLevel) + "%");
     SmartDashboard.putNumber("Min fwd PWR", minFrontDrive);
     SmartDashboard.putNumber("Min rvs Pwr", minRearDrive);
@@ -68,7 +70,7 @@ public class FindMinDrivePower extends Command {
   @Override
   protected void execute() {
     boolean moving = false;    
-    double power = testPowerLevel;
+    double power = testPowerLevel/100.0;
     if(powerLevelTimer == 0){
 
         SmartDashboard.putString("Status", "Running power level: "+ Double.toString(testPowerLevel) + "%");
@@ -77,14 +79,20 @@ public class FindMinDrivePower extends Command {
         power = - power;
     }
     _robot.driveTrain.Move(power, power);
-    double currentPosition = _robot.GetAverageEncoderPositionRaw();
-    if(Math.abs(currentPosition) > 200){
+    double currentPosition = _robot.GetAverageEncoderPosition();
+    
+    if(Math.abs(currentPosition) > .5){
         if(!secondTurn){
-            minFrontDrive = testPowerLevel/100;
+            minFrontDrive = testPowerLevel/100.0;
             SmartDashboard.putString("Status", "Determined Min FWD: "+ Double.toString(testPowerLevel) + "%");
             SmartDashboard.putNumber("Min fwd PWR", minFrontDrive);
+            secondTurn = true;
+            _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
+            _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+            
+
         }else{
-            minRearDrive = testPowerLevel/100;
+            minRearDrive = testPowerLevel/100.0;
             SmartDashboard.putString("Status", "Determined Min Right: "+ Double.toString(testPowerLevel) + "%");
             SmartDashboard.putNumber("Min rvs Pwr", minRearDrive);
             testCompleted = true;
@@ -102,6 +110,7 @@ public class FindMinDrivePower extends Command {
         powerLevelTimer ++;
         if(powerLevelTimer > PowerLevelTimeout){
             testPowerLevel = testPowerLevel + 2;
+            
             powerLevelTimer = 0;
         }
     }      
@@ -111,15 +120,18 @@ public class FindMinDrivePower extends Command {
   // Make this return true when this Command no longer needs to run execute()
   @Override
   protected boolean isFinished() {
-    
-    boolean done = _robot.stick.getRawButton(1) || testCompleted;
+    double testMin = 0;
+    boolean done = _robot.stick.getRawButton(2) || testCompleted;
     if(done){
-        if(minFrontDrive > minFrontDrive){
+        if(minFrontDrive > minRearDrive){
             RobotMap.minDrivePower = minFrontDrive;
+            testMin = minFrontDrive;
         }else{
-            RobotMap.minTurnPower = minFrontDrive;
+            RobotMap.minTurnPower = minRearDrive;
+            testMin = minRearDrive;
         }
-        SmartDashboard.putString("Status", "Determined Min Drive Power: "+ Double.toString(RobotMap.minDrivePower) + "%");
+        SmartDashboard.putString("Status", "Determined Min Drive Power: "+ Double.toString(testMin) + "%");
+        _robot.driveTrain.Move(0, 0);
         return true;
     }
     return false;
@@ -128,7 +140,7 @@ public class FindMinDrivePower extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
-    
+    _robot.driveTrain.Move(0, 0);
     
   }
 

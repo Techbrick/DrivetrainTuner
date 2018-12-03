@@ -46,13 +46,13 @@ public class TestMoveBack48 extends Command {
   @Override
   protected void initialize() {
     
-    _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+    //_robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
+    //_robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
     SmartDashboard.putString("Instructions", "The Robot will move back 48 inches, you can press button 2 to stop");
     SmartDashboard.putString("Status", "Running move back 48 inches");
     testCompleted = false;
     stoppedCounter = 0;
-    _distancePid = new DistancePid(RobotMap.kdistance, 0, 0, RobotMap.minDrivePower, .002, 1, _robot);
+    _distancePid = new DistancePid(RobotMap.kdistance, 0, 0, RobotMap.minDrivePower, .002, RobotMap.pidTDistDeadband, _robot);
     _distancePid.SetTargetDistance(-24);
     _timer = new Timer();
     _timer.start();
@@ -81,6 +81,9 @@ public class TestMoveBack48 extends Command {
         }
 
     }
+    else{
+        _robot.driveTrain.Move(0, 0); 
+    }
   
   }
 
@@ -100,7 +103,7 @@ public class TestMoveBack48 extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
-    
+    _robot.driveTrain.Move(0, 0); 
     
   }
 

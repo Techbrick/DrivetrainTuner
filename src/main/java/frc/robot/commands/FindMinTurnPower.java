@@ -68,7 +68,7 @@ public class FindMinTurnPower extends Command {
   @Override
   protected void execute() {
     boolean moving = false;    
-    double power = testPowerLevel;
+    double power = testPowerLevel/100.0;
     if(powerLevelTimer == 0){
 
         SmartDashboard.putString("Status", "Running power level: "+ Double.toString(testPowerLevel) + "%");
@@ -80,11 +80,11 @@ public class FindMinTurnPower extends Command {
     int currentPosition = _robot.leftMaster.getSelectedSensorPosition(0);
     if(Math.abs(currentPosition) > 200){
         if(!secondTurn){
-            minLeftTurn = testPowerLevel/100;
+            minLeftTurn = testPowerLevel/100.0;
             SmartDashboard.putString("Status", "Determined Min Left: "+ Double.toString(testPowerLevel) + "%");
             SmartDashboard.putNumber("Min left turn power", minLeftTurn);
         }else{
-            minRightTurn = testPowerLevel/100;
+            minRightTurn = testPowerLevel/100.0;
             SmartDashboard.putString("Status", "Determined Min Right: "+ Double.toString(testPowerLevel) + "%");
             SmartDashboard.putNumber("Min left right power", minRightTurn);
             testCompleted = true;
@@ -120,6 +120,7 @@ public class FindMinTurnPower extends Command {
             RobotMap.minTurnPower = minRightTurn;
         }
         SmartDashboard.putString("Status", "Determined Min Turn Power: "+ Double.toString(RobotMap.minTurnPower) + "%");
+        _robot.driveTrain.Move(0.0,0.0);
         return true;
     }
     return false;
@@ -129,7 +130,7 @@ public class FindMinTurnPower extends Command {
   @Override
   protected void end() {
     
-    
+    _robot.driveTrain.Move(0.0,0.0);
   }
 
   // Called when another command which requires one or more of the same
