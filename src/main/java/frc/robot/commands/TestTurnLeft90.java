@@ -54,7 +54,7 @@ public class TestTurnLeft90 extends Command {
     _robot.navX.reset();
     _robot.navX.zeroYaw();
     stoppedCounter = 0;
-    _turnPid = new TurnPid(RobotMap.kP, 0, 0, RobotMap.minTurnPower, .002, 2);
+    _turnPid = new TurnPid(RobotMap.kp_Angle, 0, 0, RobotMap.minTurnPower, .002, 2);
     _turnPid.SetTargetAngle(270);
     _timer = new Timer();
     _timer.start();

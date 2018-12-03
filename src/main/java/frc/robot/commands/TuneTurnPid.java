@@ -7,15 +7,20 @@
 
 package frc.robot.commands;
 
+import java.io.PipedReader;
+import java.util.ArrayList;
 import java.util.Stack;
 import java.util.logging.Logger;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Helpers;
 import frc.robot.Robot;
 import frc.robot.RobotMap;
+import frc.robot.TurnPid;
+import frc.robot.DTO.PidDataDTO;
 
 /**
  * An example command.  You can replace me with your own command.
@@ -23,15 +28,26 @@ import frc.robot.RobotMap;
 public class TuneTurnPid extends Command {
     
     private Robot _robot;
-    private double minLeftTurn;
-    private double minRightTurn;
-    private double avgTurnPower;
-    private Integer testPowerLevel;
+   
+    
     private Integer powerCounter;
-    private Integer powerLevelTimer;
+    private Integer turnTimer;
     private Integer PowerLevelTimeout;
     private boolean secondTurn = false;
     private boolean testCompleted;
+    private TurnPid _turnPid;
+    Timer _timer;
+    double _startTime;
+    private int stoppedTimer;
+    private double testKp;
+    private double lastPower;
+    private int iterationCounter;
+    private int oscilationCounter;
+    private int stoppedCounter;
+    private ArrayList<PidDataDTO> resultsArray;
+    private double pIncrement;
+    private double bestTime;
+    
 
   public TuneTurnPid(Robot robot) {
     // Use requires() here to declare subsystem dependencies
@@ -46,65 +62,108 @@ public class TuneTurnPid extends Command {
   @Override
   protected void initialize() {
     _robot.navX.reset();
+    _robot.navX.zeroYaw();
     _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
     _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-    SmartDashboard.putString("Instructions", "The Robot will determine the min motor power to turn, press button 1 to end");
-    SmartDashboard.putString("Status", "Running FindMinTurnPower");
-    testPowerLevel = 2;
+    SmartDashboard.putString("Instructions", "The Robot iterate through potential Kp values and will determine the best one, press button 1 to end");
+    SmartDashboard.putString("Status", "Running Tune Turn Pid");
+    oscilationCounter = 0;
     powerCounter = 0;
-    powerLevelTimer = 0;
-    PowerLevelTimeout = 50;
+    turnTimer = 0;
+    PowerLevelTimeout = 250;
     secondTurn = false;
     testCompleted = false;
-    minRightTurn = 0;
-    minLeftTurn = 0;
-    avgTurnPower = 0;
-    SmartDashboard.putString("Status", "Determined Min Left: "+ Double.toString(testPowerLevel) + "%");
-    SmartDashboard.putNumber("Min left right power", minRightTurn);
-    SmartDashboard.putNumber("Avg Min Turn Pwr", avgTurnPower);
+    testKp = RobotMap.minTurnPower/20;
+    iterationCounter = 0;
+    SmartDashboard.putNumber("Testing Kp angle", testKp);
+    resultsArray = new ArrayList<PidDataDTO>();
+    pIncrement = testKp/10;
+    bestTime = 1000;
   }
 
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
     boolean moving = false;    
-    double power = testPowerLevel;
-    if(powerLevelTimer == 0){
-
-        SmartDashboard.putString("Status", "Running power level: "+ Double.toString(testPowerLevel) + "%");
-    }
-    if(secondTurn){
-        power = - power;
-    }
-    _robot.driveTrain.Move(power, -power);
-    int currentPosition = _robot.leftMaster.getSelectedSensorPosition(0);
-    if(Math.abs(currentPosition) > 200){
-        if(!secondTurn){
-            minLeftTurn = testPowerLevel/100;
-            SmartDashboard.putString("Status", "Determined Min Left: "+ Double.toString(testPowerLevel) + "%");
-            SmartDashboard.putNumber("Min left turn power", minLeftTurn);
-        }else{
-            minRightTurn = testPowerLevel/100;
-            SmartDashboard.putString("Status", "Determined Min Right: "+ Double.toString(testPowerLevel) + "%");
-            SmartDashboard.putNumber("Min left right power", minRightTurn);
-            testCompleted = true;
-        }
-        moving = true;
-
-    }  
-    if(moving && !secondTurn){
-        powerLevelTimer = 0;
-        testPowerLevel = 2;
+    double target = 0;
+    double testTime = 0;
+    secondTurn = false;
+    if(iterationCounter % 2 == 0){
+        target = 90;
         secondTurn = true;
-        _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    }else if(!moving){
-
-        powerLevelTimer ++;
-        if(powerLevelTimer > PowerLevelTimeout){
-            testPowerLevel = testPowerLevel + 2;
-            powerLevelTimer = 0;
+    }
+    if(turnTimer == 0){
+        _turnPid = new TurnPid(testKp, 0, 0, RobotMap.minTurnPower, .002, 2);
+        _turnPid.SetTargetAngle(target);
+        SmartDashboard.putString("Status", "RunningKp: "+ Double.toString(testKp) + " target: " + Double.toString(target) + " test #" + Integer.toString(iterationCounter));
+        SmartDashboard.putNumber("Testing Kp angle", testKp);
+        _timer.reset();
+        _timer.start();
+        oscilationCounter = 0;
+        stoppedTimer = 0;
+    }
+    double power = _turnPid.GetAnglePidOutput(_robot.navX.getYaw());
+    _robot.driveTrain.Move(power, -power);
+    // compare lastPower to current to check for sign flipped;
+    if(lastPower*power < 0){
+        oscilationCounter ++;
+    }
+    stoppedTimer++;
+    if (power == 0){
+        stoppedCounter ++;
+        if(stoppedCounter == 1){
+            testTime = _timer.get();
+          SmartDashboard.putNumber("test time", _timer.get());
         }
-    }      
+    }else{
+        stoppedCounter = 0;
+        SmartDashboard.putNumber("test time", 0);
+    }
+    if (stoppedCounter > 25){
+        PidDataDTO pidResult = new PidDataDTO();
+        pidResult.Kp = testKp;
+        pidResult.time = testTime;
+        resultsArray.add(pidResult);
+        turnTimer =0;
+        iterationCounter ++;
+        testKp = testKp + pIncrement;
+        if(testTime < bestTime){
+            SmartDashboard.putNumber("Tune TurnPid Best Time", testTime);
+            bestTime = testTime;
+        }else{
+            double timeDif = Math.abs(bestTime - testTime);
+            if(timeDif < 50){
+                testCompleted = true;
+            }
+        }
+        
+    }
+    if(oscilationCounter > 5){
+        PidDataDTO pidResult = new PidDataDTO();
+        pidResult.Kp = testKp;
+        pidResult.time = 999;
+        resultsArray.add(pidResult);
+        turnTimer =0;
+        iterationCounter ++;
+        testKp = testKp - pIncrement;
+        pIncrement = pIncrement/10;
+        testKp = testKp + pIncrement;
+    }
+    if(stoppedTimer > PowerLevelTimeout){
+        PidDataDTO pidResult = new PidDataDTO();
+        pidResult.Kp = testKp;
+        pidResult.time = 999;
+        resultsArray.add(pidResult);
+        turnTimer =0;
+        iterationCounter ++;
+        testKp = testKp + pIncrement;
+        
+    }
+
+    
+
+    
+    
   
   }
 
@@ -114,12 +173,9 @@ public class TuneTurnPid extends Command {
     
     boolean done = _robot.stick.getRawButton(1) || testCompleted;
     if(done){
-        if(minLeftTurn > minRightTurn){
-            RobotMap.minTurnPower = minLeftTurn;
-        }else{
-            RobotMap.minTurnPower = minRightTurn;
-        }
-        SmartDashboard.putString("Status", "Determined Min Turn Power: "+ Double.toString(RobotMap.minTurnPower) + "%");
+        
+        SmartDashboard.putString("Status", "Determined best Turn Kp: "+ Double.toString(testKp));
+        
         return true;
     }
     return false;

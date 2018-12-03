@@ -25,7 +25,7 @@ public class RobotMap {
   public static boolean twoSpeedDrive = false;
 
   public static  double kAngleSetpoint = 0.0;
-  public static  double kP = 0.005; // propotional turning constant
+  public static  double kp_Angle = 0.005; // propotional turning constant
   public static  double joystickDeadband = .05;
   public static double driveEncoderTicksPerInch = 437.42;
   public static double pidTurnDeadband = 2;
