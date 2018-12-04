@@ -63,7 +63,8 @@ public class TestMoveBack48 extends Command {
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    if(_robot.stick.getRawButton(1)){
+    //if(_robot.stick.getRawButton(1)){
+    if(true){
         double power = _distancePid.GetDistancePidOutput();
         _robot.driveTrain.Move(power, power); 
         if (power == 0){
@@ -71,6 +72,7 @@ public class TestMoveBack48 extends Command {
             if(stoppedCounter == 1){
 
                 SmartDashboard.putNumber("test time", _timer.get());
+
             }
         }else{
             stoppedCounter = 0;
@@ -93,7 +95,7 @@ public class TestMoveBack48 extends Command {
     
     boolean done = _robot.stick.getRawButton(2) || testCompleted;
     if(done){
-        
+         _robot.driveTrain.Move(0, 0); 
         SmartDashboard.putString("Status", "Completed move back 24 inches");
         return true;
     }

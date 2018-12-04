@@ -33,19 +33,26 @@ public class TurnPid{
     }
 
     public double GetAnglePidOutput(double currentAngle) {
-
+        currentAngle = Helpers.ConvertYawToHeading(currentAngle);
+        SmartDashboard.putNumber("target", _targetAngle);
+        SmartDashboard.putNumber("current angle", currentAngle);
         if(start){
 
             SmartDashboard.putString("Pid t Status", "Started New PidTurn Class");
         }
-        double angle_error = currentAngle - _targetAngle; //calculate error
+        double angle_error = _targetAngle - currentAngle ; //calculate error
         if(RobotMap.verbose){
             SmartDashboard.putNumber("TEST angle error", angle_error);
         }
-        angle_error = Math.abs(angle_error) > 180 ? 180 - angle_error : angle_error; //scale error to take shortest path
-        if (_targetAngle == 0 && currentAngle > 180) {
-                angle_error = currentAngle - 360;
+        if(angle_error > 180){
+            angle_error = 360-angle_error;
+        }else if(angle_error < -180){
+            angle_error = angle_error + 360;
         }
+        //angle_error = Math.abs(angle_error) > 180 ? 180 - angle_error : angle_error; //scale error to take shortest path
+        // if (_targetAngle == 0 && currentAngle > 180) {
+        //         angle_error = currentAngle - 360;
+        // }
         if(RobotMap.verbose){
             SmartDashboard.putNumber("TEST angle error corr", angle_error);
         }
@@ -78,7 +85,7 @@ public class TurnPid{
             SmartDashboard.putNumber("TEST angle pwr ", angleOutput);
         }
       
-        return angleOutput;
+        return -angleOutput;
       }
 
 

@@ -27,5 +27,10 @@ public class Helpers {
         String numberAsString = decimalFormat.format(input);
         return numberAsString;
     }
-
+    public static double ConvertYawToHeading(double yaw){
+        if(yaw < 0){
+            yaw = yaw +360;
+        }
+        return yaw;
+    }
 }

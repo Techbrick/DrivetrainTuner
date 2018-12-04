@@ -48,7 +48,9 @@ public class TuneDistancePid extends Command {
     private ArrayList<PidDataDTO> resultsArray;
     private double pIncrement;
     private double bestTime;
-    
+    double loopStart;
+    double loopEnd;
+    double testTime = 0;
 
   public TuneDistancePid(Robot robot) {
     // Use requires() here to declare subsystem dependencies
@@ -66,7 +68,7 @@ public class TuneDistancePid extends Command {
     _robot.navX.zeroYaw();
     _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
     _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-    SmartDashboard.putString("Instructions", "The Robot iterate through potential Kp values and will determine the best one, press button 1 to end");
+    SmartDashboard.putString("Instructions", "The Robot iterate through potential Kp values and will determine the best one, hold 1 to run, press button 2 to end");
     SmartDashboard.putString("Status", "Running Tune Distance Pid");
     oscilationCounter = 0;
     powerCounter = 0;
@@ -79,91 +81,111 @@ public class TuneDistancePid extends Command {
     SmartDashboard.putNumber("Testing Kp Distance", testKp);
     resultsArray = new ArrayList<PidDataDTO>();
     pIncrement = testKp/10;
-    bestTime = 1000;
+    bestTime = Double.MAX_VALUE;
+    _timer = new Timer();
+    loopStart = Timer.getFPGATimestamp();
+    loopEnd = Double.MAX_VALUE;
   }
 
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    boolean moving = false;    
-    double target = -48;
-    double testTime = 0;
-    secondTurn = false;
-    if(iterationCounter % 2 == 0){
-        target = 48;
-        secondTurn = true;
-    }
-    if(turnTimer == 0){
-        _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-        _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-        _distPid = new DistancePid(testKp, 0, 0, RobotMap.minTurnPower, .002, 1, _robot);
-        _distPid.SetTargetDistance(target);
-        SmartDashboard.putString("Status", "RunningKp: "+ Double.toString(testKp) + " target: " + Double.toString(target) + " test #" + Integer.toString(iterationCounter));
-        _timer.reset();
-        _timer.start();
-        oscilationCounter = 0;
-        stoppedCounter = 0;
-        SmartDashboard.putNumber("Testing Kp Distance", testKp);
-    }
-    double power = _distPid.GetDistancePidOutput();
-    _robot.driveTrain.Move(power, -power);
-    stoppedCounter ++;
-    // compare lastPower to current to check for sign flipped;
-    if(lastPower*power < 0){
-        oscilationCounter ++;
-    }
-    if (power == 0){
+    if(_robot.stick.getRawButton(1)){
+        double target = 0;
+        boolean moving = false;  
+        secondTurn = false;
+        if(iterationCounter % 2 == 0){
+            target = 24;
+            secondTurn = true;
+        }
+        if(turnTimer == 0){
+            // _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
+            // _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+            _distPid = new DistancePid(testKp, 0, 0, RobotMap.minTurnPower, .002, 1, _robot);
+            _distPid.SetTargetDistance(target);
+            SmartDashboard.putString("Status", "RunningKp: "+ Double.toString(testKp) + " target: " + Double.toString(target) + " test #" + Integer.toString(iterationCounter));
+            _timer.reset();
+            _timer.start();
+            loopStart = Timer.getFPGATimestamp();
+            oscilationCounter = 0;
+            stoppedCounter = 0;
+            SmartDashboard.putNumber("Testing Kp Distance", testKp);
+        }
+        SmartDashboard.putNumber("pidDist Turn Timer", turnTimer);
+        turnTimer++;
+        double power = _distPid.GetDistancePidOutput();
+        _robot.driveTrain.Move(power, power);
         stoppedCounter ++;
-        if(stoppedCounter == 1){
-            testTime = _timer.get();
-          SmartDashboard.putNumber("test time", _timer.get());
+        // compare lastPower to current to check for sign flipped;
+        if(lastPower*power < 0){
+            oscilationCounter ++;
         }
-    }else{
-        stoppedCounter = 0;
-        SmartDashboard.putNumber("test time", 0);
-    }
-    if (stoppedCounter > 25){
-        PidDataDTO pidResult = new PidDataDTO();
-        pidResult.Kp = testKp;
-        pidResult.time = testTime;
-        resultsArray.add(pidResult);
-        turnTimer =0;
-        iterationCounter ++;
-        testKp = testKp + pIncrement;
-        if(testTime < bestTime){
-            SmartDashboard.putNumber("Tune DistPid Best Time", testTime);
-            bestTime = testTime;
-        }else{
-            double timeDif = Math.abs(bestTime - testTime);
-            if(timeDif < 50){
-                testCompleted = true;
+        lastPower = power;
+        if (power == 0){
+            stoppedCounter ++;
+            SmartDashboard.putBoolean("Detected Stop", true);
+            SmartDashboard.putNumber("stopped counter", stoppedCounter);
+            if(stoppedCounter == 1){
+                //testTime = _timer.getFPGATimestamp();
+                testTime = turnTimer*20;
+              SmartDashboard.putNumber("pidDistTune test time",testTime);
             }
+        }else{
+            stoppedCounter = 0;
+           // SmartDashboard.putNumber("test time", 0);
+        }
+        if (stoppedCounter > 25){
+           
+            PidDataDTO pidResult = new PidDataDTO();
+            pidResult.Kp = testKp;
+            pidResult.time = testTime;
+            resultsArray.add(pidResult);
+            turnTimer =0;
+            iterationCounter ++;
+            testKp = testKp + pIncrement;
+            if(testTime < bestTime){
+                
+                bestTime = testTime;
+                SmartDashboard.putNumber("Tune DistPid Best Time", bestTime);
+            }else{
+                double timeDif = Math.abs(bestTime - testTime);
+                SmartDashboard.putNumber("testTimeDiff", timeDif);
+                if(timeDif < 50){
+                    testCompleted = true;
+                }
+            }
+            stoppedCounter = 0;
+            turnTimer = 0;
+        }else{
+            SmartDashboard.putBoolean("Detected Stop", false);
+        }
+        if(oscilationCounter > 5){
+            PidDataDTO pidResult = new PidDataDTO();
+            pidResult.Kp = testKp;
+            pidResult.time = Double.MAX_VALUE;
+            resultsArray.add(pidResult);
+            turnTimer =0;
+            iterationCounter ++;
+            testKp = testKp - pIncrement;
+            pIncrement = pIncrement/10;
+            testKp = testKp + pIncrement;
+        }
+    
+        if(stoppedTimer > PowerLevelTimeout){
+            PidDataDTO pidResult = new PidDataDTO();
+            pidResult.Kp = testKp;
+            pidResult.time = Double.MAX_VALUE;
+            resultsArray.add(pidResult);
+            turnTimer =0;
+            iterationCounter ++;
+            testKp = testKp + pIncrement;
+            
         }
         
     }
-    if(oscilationCounter > 5){
-        PidDataDTO pidResult = new PidDataDTO();
-        pidResult.Kp = testKp;
-        pidResult.time = 999;
-        resultsArray.add(pidResult);
-        turnTimer =0;
-        iterationCounter ++;
-        testKp = testKp - pIncrement;
-        pIncrement = pIncrement/10;
-        testKp = testKp + pIncrement;
+    else{
+        _robot.driveTrain.Move(0,0);
     }
-
-    if(stoppedTimer > PowerLevelTimeout){
-        PidDataDTO pidResult = new PidDataDTO();
-        pidResult.Kp = testKp;
-        pidResult.time = 999;
-        resultsArray.add(pidResult);
-        turnTimer =0;
-        iterationCounter ++;
-        testKp = testKp + pIncrement;
-        
-    }
-
 
     
     
@@ -174,11 +196,12 @@ public class TuneDistancePid extends Command {
   @Override
   protected boolean isFinished() {
     
-    boolean done = _robot.stick.getRawButton(1) || testCompleted;
+    boolean done = _robot.stick.getRawButton(2) || testCompleted;
     if(done){
         
         SmartDashboard.putString("Status", "Determined best dist Kp: "+ Double.toString(testKp));
-        
+       
+        _robot.driveTrain.Move(0,0);
         return true;
     }
     return false;
@@ -187,14 +210,13 @@ public class TuneDistancePid extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
-    
-    
+    _robot.driveTrain.Move(0,0);
   }
 
   // Called when another command which requires one or more of the same
   // subsystems is scheduled to run
   @Override
   protected void interrupted() {
-    
+    _robot.driveTrain.Move(0,0);
   }
 }

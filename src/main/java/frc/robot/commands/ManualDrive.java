@@ -52,11 +52,13 @@ public class ManualDrive extends Command {
         double rightDrivePower = _robot.leftMaster.getMotorOutputVoltage();
         
         double avgInput = (leftDrivePower + rightDrivePower)/2.0;
+        SmartDashboard.putNumber("average input power", avgInput);
         double absAvgInput = Math.abs(avgInput);
         double absVel = Math.abs(_robot.GetAverageEncoderRate()*12.0);
 
-        if(absVel > 0.1 && avgInput > RobotMap.minDrivePower){
+        if(absAvgInput > RobotMap.minDrivePower){
             double accel = (absVel - _lastAvgVel)/.02;
+            SmartDashboard.putNumber("Accell", accel);
             if(accel > maxAccell ){
                 maxAccell = accel;
                 SmartDashboard.putNumber("Max FPS/S", maxAccell);
@@ -65,18 +67,19 @@ public class ManualDrive extends Command {
                 maxVel = absVel;
                 SmartDashboard.putNumber("Max FPS", maxVel);
             }
-            if(accel < .05* maxAccell){
-                double newAvg = ( avgVelPV * avgVelCounter + absVel/absAvgInput)/(double)(avgVelCounter + 1);
+            double newAvg = ( avgVelPV * avgVelCounter + absVel/absAvgInput)/(double)(avgVelCounter + 1);
                 avgVelCounter ++;
                 RobotMap.fpsPerVolt = newAvg;
                 SmartDashboard.putNumber("Avg FPS/V", newAvg);
-            }
-            else{
-                double newAvg = (avgAccellPV * avgAccellCounter + accel/avgInput)/(double)(RobotMap.averageCounterAccel + 1);
+            if(accel > 0){
+                
+
+                double newAvgA = (avgAccellPV * avgAccellCounter + accel/avgInput)/(double)(RobotMap.averageCounterAccel + 1);
                 avgAccellCounter ++;
-                RobotMap.accelPerVolt = newAvg;
-                SmartDashboard.putNumber("Max FPS/V/s", newAvg);
+                RobotMap.accelPerVolt = newAvgA;
+                SmartDashboard.putNumber("Max FPS/V/s", newAvgA);
             }
+            
         }
         _lastAvgVel = absVel;
         

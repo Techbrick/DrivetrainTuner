@@ -25,10 +25,10 @@ public class RobotMap {
   public static boolean twoSpeedDrive = false;
 
   public static  double kAngleSetpoint = 0.0;
-  public static  double kp_Angle = 0.0005; // propotional turning constant
+  public static  double kp_Angle = 0.04; // propotional turning constant
   public static  double joystickDeadband = .05;
   public static double driveEncoderTicksPerInch = 437.42;
-  public static double pidTurnDeadband = 2;
+  public static double pidTurnDeadband = 1;
 
   public static  double WHEEL_DIAMETER = 6;
   public static  double ENCODER_PULSE_PER_REV = 2048;
@@ -40,7 +40,7 @@ public class RobotMap {
   public static double encoderMovementThreshold = 200;
   public static int shiftChannel = 0;
 
-  public static double minTurnPower = .15;
+  public static double minTurnPower = .24;
   public static double minDrivePower = .12;
   public static double maxPidPower = .5;
   public static boolean verbose = true;
