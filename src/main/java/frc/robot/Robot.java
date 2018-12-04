@@ -132,12 +132,13 @@ public class Robot extends TimedRobot {
 		rightEncoderPosition = () -> rightMaster.getSelectedSensorPosition(0) * encoderConstant;
 		rightEncoderRate = () -> rightMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
 		
-    m_chooser.addDefault("Default Auto", new ExampleCommand(this));
-    m_chooser.addObject("Drive Encoder Cal", new DriveEncoderCal(this));
+    
+    m_chooser.addObject("Drive Fwd 24 inches", new DriveDistanceAndDirection(this, 24, 0));
+    m_chooser.addObject("Drive dog leg right", new DogLegRight(this));
+    m_chooser.addObject("Drive dog leg left", new DogLegLeft(this));
     SmartDashboard.putData("Auto mode", m_chooser);
-		// Set the update rate instead of using flush because of a ntcore bug
-		// -> probably don't want to do this on a robot in competition
-    NetworkTableInstance.getDefault().setUpdateRate(0.010);
+		
+    NetworkTableInstance.getDefault().setUpdateRate(0.020);
     
     m_oi = new OI();
     navX.reset();

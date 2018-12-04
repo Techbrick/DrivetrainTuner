@@ -7,6 +7,8 @@
 
 package frc.robot.commands;
 
+import java.util.Stack;
+import java.util.logging.Logger;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -21,69 +23,59 @@ import frc.robot.TurnPid;
 /**
  * An example command.  You can replace me with your own command.
  */
-public class TestTurnLeft90 extends Command {
+public class TurnInPlace extends Command {
     
     private Robot _robot;
     private int stoppedCounter;
     private boolean testCompleted;
     private TurnPid _turnPid;
-    Timer _timer;
-    double _startTime;
+    private double _heading;
+    
 
-  public TestTurnLeft90(Robot robot) {
+  public TurnInPlace(Robot robot, double heading) {
     // Use requires() here to declare subsystem dependencies
     _robot = robot;
     requires(_robot.driveTrain);
+    _heading = heading;
     stoppedCounter = 0;
     
-
-
   }
 
-  // Called just before this Command runs the first time
+
   @Override
   protected void initialize() {
     
-    // _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    // _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-    SmartDashboard.putString("Instructions", "The Robot will turn left 90 degrees, you can press button 2 to stop");
-    SmartDashboard.putString("Status", "Running turn left 90 degrees");
+    
+    SmartDashboard.putString("Instructions", "");
+    SmartDashboard.putString("Status", "Running turn in place to " + Double.toString(_heading));
     testCompleted = false;
     // _robot.navX.reset();
     // _robot.navX.zeroYaw();
     stoppedCounter = 0;
-    _turnPid = new TurnPid(RobotMap.kp_Angle, 0, 0, RobotMap.minTurnPower, .002, 2);
-    _turnPid.SetTargetAngle(_robot.navX.getYaw()-90);
-    _timer = new Timer();
-    _timer.start();
-    _startTime = _timer.get();
+    _turnPid = new TurnPid(RobotMap.kp_Angle, 0, 0, RobotMap.minTurnPower, .002, RobotMap.pidTurnDeadband);
+    _turnPid.SetTargetAngle(_heading);
+    
   }
 
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    if(_robot.stick.getRawButton(1)){
+    
       double power = _turnPid.GetAnglePidOutput(_robot.navX.getYaw());
       
       _robot.driveTrain.Move(-power, power); 
       if (power == 0){
           stoppedCounter ++;
-          if(stoppedCounter == 1){
-
-            SmartDashboard.putNumber("test time", _timer.get());
-          }
+          
       }else{
           stoppedCounter = 0;
           SmartDashboard.putNumber("test time", 0);
       }
-      if (stoppedCounter > 25){
+      if (stoppedCounter > 5){
           testCompleted = true;
       }
 
-    }
-    else{
-      _robot.driveTrain.Move(0, 0); 
-  }
+   
     
   }
 
@@ -91,10 +83,10 @@ public class TestTurnLeft90 extends Command {
   @Override
   protected boolean isFinished() {
     
-    boolean done = _robot.stick.getRawButton(2) || testCompleted;
+    boolean done = testCompleted;
     if(done){
         
-        SmartDashboard.putString("Status", "Completed turn left 90");
+        SmartDashboard.putString("Status", "Completed turn in place to " + Double.toString(_heading));
         return true;
     }
     return false;
@@ -111,6 +103,6 @@ public class TestTurnLeft90 extends Command {
   // subsystems is scheduled to run
   @Override
   protected void interrupted() {
-    SmartDashboard.putString("Status", "Turn let 90 inches interupted");
+    
   }
 }
