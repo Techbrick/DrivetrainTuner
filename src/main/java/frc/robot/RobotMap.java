@@ -44,12 +44,15 @@ public class RobotMap {
   public static double minDrivePower = .12;
   public static double maxPidPower = .5;
   public static boolean verbose = true;
-  public static double maxVelocity = 0;
-  public static double maxAccel = 0;
-  public static double fpsPerVolt = 0;
-  public static double accelPerVolt = 0;
+  public static double maxVelocity = 10;
+  public static double maxAccel = 15;
+  public static double fpsPerVolt = .8;
+  public static double accelPerVolt = 15.0/12.0;
   public static int averageCounterVel = 0;
+  public static double trackWidth = 24;
   public static int averageCounterAccel = 0;
+  public static double KpDistanceFollower = .8;
+  
 
 
 }

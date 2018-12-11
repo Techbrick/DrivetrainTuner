@@ -33,4 +33,11 @@ public class Helpers {
         }
         return yaw;
     }
+    public static double FeetToMeters(double fps){
+        return fps*.3048;
+    }
+    public static double InchesToMeters(double inches){
+        return inches /12*.3048;
+    }
+
 }
