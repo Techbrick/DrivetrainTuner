@@ -7,6 +7,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.SPI;
@@ -19,7 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.commands.*;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.ExampleSubsystem;
+
 
 import java.util.function.Supplier;
 import com.ctre.phoenix.*;
@@ -32,7 +33,12 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 
 import org.omg.CORBA.PRIVATE_MEMBER;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -45,26 +51,23 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  * project.
  */
 public class Robot extends TimedRobot {
-  public static ExampleSubsystem m_subsystem = new ExampleSubsystem();
+  
   public static OI m_oi;
-  RobotMap _robotMap = new RobotMap();
+  public RobotMap robotMap = new RobotMap();
   Command m_autonomousCommand;
   SendableChooser<Command> m_chooser = new SendableChooser<>();
-  Supplier<Double> leftEncoderPosition;
-	Supplier<Double> leftEncoderRate;
-	Supplier<Double> rightEncoderPosition;
-  Supplier<Double> rightEncoderRate;
   
+  public 
   NetworkTableEntry autoSpeedEntry = NetworkTableInstance.getDefault().getEntry("/robot/autospeed");
   NetworkTableEntry telemetryEntry = NetworkTableInstance.getDefault().getEntry("/robot/telemetry");
   
   public Joystick stick;
 	public  double encoderConstant;
 	
-  public TalonSRX leftMaster;
-  private TalonSRX leftFollower;
-  public TalonSRX rightMaster;
-  private TalonSRX rightFollower;
+  // public TalonSRX leftMaster;
+  // private TalonSRX leftFollower;
+  // public TalonSRX rightMaster;
+  // private TalonSRX rightFollower;
   public  DriveSubsystem driveTrain;
   public AHRS navX;
 
@@ -82,23 +85,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putString("Instructions", "");
     SmartDashboard.putString("Status", "");
     stick = new Joystick(0);
-    RobotMap.verbose = true;
-		leftMaster = new TalonSRX(RobotMap.leftMaster);
-    leftFollower = new TalonSRX(RobotMap.leftFollower);
-    rightMaster = new TalonSRX(RobotMap.rightMaster);
-    rightFollower  = new TalonSRX(RobotMap.rightFollower);
-    leftFollower.setInverted(true);
-    leftFollower.follow(leftMaster);
-    rightFollower.follow(rightMaster);
-    
-    leftMaster.clearStickyFaults(30);
-    rightMaster.clearStickyFaults(30);
-    leftMaster.setNeutralMode(NeutralMode.Brake);
-    leftMaster.setNeutralMode(NeutralMode.Brake);
-    leftFollower.clearStickyFaults(30);
-    rightFollower.clearStickyFaults(30);
-    leftFollower.setNeutralMode(NeutralMode.Brake);
-    rightFollower.setNeutralMode(NeutralMode.Brake);
+    robotMap.verbose = true;
+		
 		//
 		// Configure drivetrain movement
     //
@@ -118,19 +106,9 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Test back 48", new TestMoveBack48(this));
 
 		
-    double encoderConstant = (1 / RobotMap.driveEncoderTicksPerInch);
-
-    leftMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder,0, 10);
-    leftMaster.setSelectedSensorPosition(0, 0, 10);
-    leftMaster.setSensorPhase(true);
-		leftEncoderPosition = () -> leftMaster.getSelectedSensorPosition(0) * encoderConstant;
-		leftEncoderRate = () -> leftMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
-		
-    rightMaster.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
     
-    rightMaster.setSelectedSensorPosition(0, 0, 10);
-		rightEncoderPosition = () -> rightMaster.getSelectedSensorPosition(0) * encoderConstant;
-		rightEncoderRate = () -> rightMaster.getSelectedSensorVelocity(0) * encoderConstant * 0.1;
+
+    
 		
     
     m_chooser.addObject("Drive Fwd 24 inches", new DriveDistanceAndDirection(this, 24, 0));
@@ -143,6 +121,23 @@ public class Robot extends TimedRobot {
     m_oi = new OI();
     navX.reset();
     navX.zeroYaw();
+    new Thread(() -> {
+      UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+      camera.setResolution(640, 480);
+      
+      CvSink cvSink = CameraServer.getInstance().getVideo();
+      CvSource outputStream = CameraServer.getInstance().putVideo("Blur", 640, 480);
+      
+      Mat source = new Mat();
+      Mat output = new Mat();
+      
+      while(!Thread.interrupted()) {
+          cvSink.grabFrame(source);
+          Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+          outputStream.putFrame(output);
+      }
+  }).start();
+
   }
 
   /**
@@ -166,8 +161,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void disabledInit() {
-    leftMaster.set(ControlMode.PercentOutput, 0);
-    rightMaster.set(ControlMode.PercentOutput, 0);
+    driveTrain.Move(0,0);
   }
 
   @Override
@@ -236,7 +230,7 @@ public class Robot extends TimedRobot {
   public void testInit() {
     super.testInit();
     // 
-    RobotMap.verbose = true;
+    robotMap.verbose = true;
   }
 
   @Override
@@ -249,44 +243,17 @@ public class Robot extends TimedRobot {
   }
   //   this function is needed for commands to read position;
 
-  public double GetAverageEncoderPosition(){
-    double left = leftEncoderPosition.get();
-    double right = rightEncoderPosition.get();
-    double result = (left + right)/2;
-    return result;
-
-  }
-  public double GetAverageEncoderRate(){
-    double left = leftEncoderRate.get();
-    double right = rightEncoderRate.get();
-    double result = (left + right)/2;
-    return result;
-
-  }
-  public double GetAverageEncoderPositionRaw(){
-    double left = leftMaster.getSelectedSensorPosition(0);
-    double right = rightMaster.getSelectedSensorPosition(0);
-    double result = (left + right)/2;
-    return result;
-
-  }
-  public double GetAverageEncoderRateRaw(){
-    double left = leftMaster.getSelectedSensorVelocity(0);
-    double right = rightMaster.getSelectedSensorVelocity(0);
-    double result = (left + right)/2;
-    return result;
-
-  }
+  
   private void Logger(){
-    if(RobotMap.verbose){
-      SmartDashboard.putNumber("l_encoder_pos", Math.round(leftEncoderPosition.get()));
+    if(robotMap.verbose){
+      SmartDashboard.putNumber("l_encoder_pos", Math.round(driveTrain.GetLeftEncoderPosition()));
       // SmartDashboard.putNumber("l_encoder_rate", Math.round(leftEncoderRate.get()));
-      SmartDashboard.putNumber("r_encoder_pos", Math.round(rightEncoderPosition.get()));
+      SmartDashboard.putNumber("r_encoder_pos", Math.round(driveTrain.GetRightEncoderPosition()));
       // SmartDashboard.putNumber("r_encoder_rate", Math.round(rightEncoderRate.get()));
       SmartDashboard.putNumber("navx pitch", Math.round(navX.getPitch()));
       SmartDashboard.putNumber("navx Heading", navX.getCompassHeading());
       SmartDashboard.putNumber("navx Angle", Math.round(navX.getRawMagX()));
-      SmartDashboard.putNumber("avgEncoderRate", GetAverageEncoderRate());
+      SmartDashboard.putNumber("avgEncoderRate", driveTrain.GetAverageEncoderRate());
     }
     
     double yaw = navX.getYaw();
@@ -295,7 +262,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("navX yaw", Math.round(yaw));
     
     //SmartDashboard.putBoolean("joystick buttom", stick.getRawButton(1));
-    double fps = GetAverageEncoderRate()*12;
+    double fps = driveTrain.GetAverageEncoderRate()*12;
     SmartDashboard.putNumber("fps", fps);
     
   }

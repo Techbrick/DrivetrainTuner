@@ -48,8 +48,7 @@ public class FindMinDrivePower extends Command {
   @Override
   protected void initialize() {
     _robot.navX.reset();
-    _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+    _robot.driveTrain.ResetEncoders();
     SmartDashboard.putString("Instructions", "The Robot will determine the min motor power to turn, press button 1 to end");
     SmartDashboard.putString("Status", "Running FindMinTurnPower");
     testPowerLevel = 2;
@@ -79,7 +78,7 @@ public class FindMinDrivePower extends Command {
         power = - power;
     }
     _robot.driveTrain.Move(power, power);
-    double currentPosition = _robot.GetAverageEncoderPosition();
+    double currentPosition = _robot.driveTrain.GetAverageEncoderPosition();
     
     if(Math.abs(currentPosition) > .5){
         if(!secondTurn){
@@ -87,8 +86,7 @@ public class FindMinDrivePower extends Command {
             SmartDashboard.putString("Status", "Determined Min FWD: "+ Double.toString(testPowerLevel) + "%");
             SmartDashboard.putNumber("Min fwd PWR", minFrontDrive);
             secondTurn = true;
-            _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-            _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+            _robot.driveTrain.ResetEncoders();
             
 
         }else{
@@ -124,10 +122,10 @@ public class FindMinDrivePower extends Command {
     boolean done = _robot.stick.getRawButton(2) || testCompleted;
     if(done){
         if(minFrontDrive > minRearDrive){
-            RobotMap.minDrivePower = minFrontDrive;
+            _robot.robotMap.minDrivePower = minFrontDrive;
             testMin = minFrontDrive;
         }else{
-            RobotMap.minTurnPower = minRearDrive;
+            _robot.robotMap.minDrivePower = minRearDrive;
             testMin = minRearDrive;
         }
         SmartDashboard.putString("Status", "Determined Min Drive Power: "+ Double.toString(testMin) + "%");

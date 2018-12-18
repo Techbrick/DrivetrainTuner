@@ -65,8 +65,7 @@ public class TuneTurnPid extends Command {
   protected void initialize() {
     _robot.navX.reset();
     _robot.navX.zeroYaw();
-    _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+    _robot.driveTrain.ResetEncoders();
     SmartDashboard.putString("Instructions", "The Robot iterate through potential Kp values and will determine the best one, hold 1 to run, press button 2 to end");
     SmartDashboard.putString("Status", "Running Tune Turn Pid");
     oscilationCounter = 0;
@@ -75,7 +74,7 @@ public class TuneTurnPid extends Command {
     PowerLevelTimeout = 250;
     secondTurn = false;
     testCompleted = false;
-    testKp = RobotMap.minTurnPower/40;
+    testKp = _robot.robotMap.minTurnPower/40;
     iterationCounter = 0;
     SmartDashboard.putNumber("Testing Kp angle", testKp);
     resultsArray = new ArrayList<PidDataDTO>();
@@ -96,7 +95,7 @@ public class TuneTurnPid extends Command {
             secondTurn = true;
         }
         if(turnTimer == 0){
-            _turnPid = new TurnPid(testKp, 0, 0, RobotMap.minTurnPower, .002, 2);
+            _turnPid = new TurnPid(testKp, 0, 0, _robot.robotMap.minTurnPower, .002, 2);
             _turnPid.SetTargetAngle(target);
             SmartDashboard.putString("Status", "RunningKp: "+ Double.toString(testKp) + " target: " + Double.toString(target) + " test #" + Integer.toString(iterationCounter));
             SmartDashboard.putNumber("Testing Kp angle", testKp);

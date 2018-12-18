@@ -66,8 +66,7 @@ public class TuneDistancePid extends Command {
   protected void initialize() {
     _robot.navX.reset();
     _robot.navX.zeroYaw();
-    _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+    _robot.driveTrain.ResetEncoders();
     SmartDashboard.putString("Instructions", "The Robot iterate through potential Kp values and will determine the best one, hold 1 to run, press button 2 to end");
     SmartDashboard.putString("Status", "Running Tune Distance Pid");
     oscilationCounter = 0;
@@ -76,7 +75,7 @@ public class TuneDistancePid extends Command {
     PowerLevelTimeout = 250;
     secondTurn = false;
     testCompleted = false;
-    testKp = RobotMap.minDrivePower/12;
+    testKp = _robot.robotMap.minDrivePower/12;
     iterationCounter = 0;
     SmartDashboard.putNumber("Testing Kp Distance", testKp);
     resultsArray = new ArrayList<PidDataDTO>();
@@ -101,7 +100,7 @@ public class TuneDistancePid extends Command {
         if(turnTimer == 0){
             // _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
             // _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
-            _distPid = new DistancePid(testKp, 0, 0, RobotMap.minTurnPower, .002, 1, _robot);
+            _distPid = new DistancePid(testKp, 0, 0, _robot.robotMap.minTurnPower, .002, 1, _robot);
             _distPid.SetTargetDistance(target);
             SmartDashboard.putString("Status", "RunningKp: "+ Double.toString(testKp) + " target: " + Double.toString(target) + " test #" + Integer.toString(iterationCounter));
             _timer.reset();

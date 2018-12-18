@@ -33,7 +33,7 @@ public class DriveEncoderCal extends Command {
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    startingEncoderPosition = _robot.GetAverageEncoderPositionRaw();
+    startingEncoderPosition = _robot.driveTrain.GetAverageEncoderPositionRaw();
     SmartDashboard.putString("Instructions", "Drive forward exactly 48 inches and when stoped press button 1");
     SmartDashboard.putString("Status", "Running Encoder Cal");
   }
@@ -48,7 +48,7 @@ public class DriveEncoderCal extends Command {
     }else{
        // SmartDashboard.putString("Status", "Running Encoder Cal execute");
 
-        double power = Helpers.DeadbandJoystick(_robot.stick.getY());
+        double power = Helpers.DeadbandJoystick(_robot.stick.getY(), _robot.robotMap);
         SmartDashboard.putString("Status", "Running Encoder Cal execute stick "+ Double.toString(power));
         _robot.driveTrain.Move(power, power);
     }
@@ -63,7 +63,7 @@ public class DriveEncoderCal extends Command {
     if(done){
         
         SmartDashboard.putString("Status", "Calculating Encoder Cal");
-        endingEncoderPosition = _robot.GetAverageEncoderPositionRaw();
+        endingEncoderPosition = _robot.driveTrain.GetAverageEncoderPositionRaw();
     
         return true;
     }
@@ -93,7 +93,7 @@ public class DriveEncoderCal extends Command {
   @Override
   protected void interrupted() {
     SmartDashboard.putString("Status", "Calculating Encoder Cal");
-    endingEncoderPosition = _robot.GetAverageEncoderPositionRaw();
+    endingEncoderPosition = _robot.driveTrain.GetAverageEncoderPositionRaw();
     
     double ticksPerInch = (endingEncoderPosition - startingEncoderPosition)/48;
     

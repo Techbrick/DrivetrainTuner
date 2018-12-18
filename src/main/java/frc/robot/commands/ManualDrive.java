@@ -43,20 +43,20 @@ public class ManualDrive extends Command {
   // Called repeatedly when this Command is scheduled to run
   @Override
   protected void execute() {
-    double power = Helpers.DeadbandJoystick(-_robot.stick.getY());
-    double twist =Helpers.DeadbandJoystick( _robot.stick.getTwist()/2);
+    double power = Helpers.DeadbandJoystick(-_robot.stick.getY(), _robot.robotMap);
+    double twist =Helpers.DeadbandJoystick( _robot.stick.getTwist(), _robot.robotMap);
     _robot.driveTrain.ArcadeDrive(power, twist);   
-    if(RobotMap.verbose){
+    if(_robot.robotMap.verbose){
         
-        double leftDrivePower = _robot.leftMaster.getMotorOutputVoltage();
-        double rightDrivePower = _robot.leftMaster.getMotorOutputVoltage();
+        double leftDrivePower = _robot.driveTrain.GetLeftOutputVoltage();
+        double rightDrivePower = _robot.driveTrain.GetRightOutputVoltage();
         
         double avgInput = (leftDrivePower + rightDrivePower)/2.0;
         SmartDashboard.putNumber("average input power", avgInput);
         double absAvgInput = Math.abs(avgInput);
-        double absVel = Math.abs(_robot.GetAverageEncoderRate()*12.0);
+        double absVel = Math.abs(_robot.driveTrain.GetAverageEncoderRate()*12.0);
 
-        if(absAvgInput > RobotMap.minDrivePower){
+        if(absAvgInput > _robot.robotMap.minDrivePower){
             double accel = (absVel - _lastAvgVel)/.02;
             SmartDashboard.putNumber("Accell", accel);
             if(accel > maxAccell ){
@@ -69,14 +69,14 @@ public class ManualDrive extends Command {
             }
             double newAvg = ( avgVelPV * avgVelCounter + absVel/absAvgInput)/(double)(avgVelCounter + 1);
                 avgVelCounter ++;
-                RobotMap.fpsPerVolt = newAvg;
+                _robot.robotMap.fpsPerVolt = newAvg;
                 SmartDashboard.putNumber("Avg FPS/V", newAvg);
             if(accel > 0){
                 
 
-                double newAvgA = (avgAccellPV * avgAccellCounter + accel/avgInput)/(double)(RobotMap.averageCounterAccel + 1);
+                double newAvgA = (avgAccellPV * avgAccellCounter + accel/avgInput)/(double)(_robot.robotMap.averageCounterAccel + 1);
                 avgAccellCounter ++;
-                RobotMap.accelPerVolt = newAvgA;
+                _robot.robotMap.accelPerVolt = newAvgA;
                 SmartDashboard.putNumber("Max FPS/V/s", newAvgA);
             }
             

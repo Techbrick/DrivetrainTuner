@@ -51,7 +51,7 @@ public class TestMoveFwd48 extends Command {
     SmartDashboard.putString("Status", "Running move fwd 48 inches");
     testCompleted = false;
     stoppedCounter = 0;
-    _distancePid = new DistancePid(RobotMap.kdistance, 0, 0, RobotMap.minDrivePower, .002, RobotMap.pidTDistDeadband, _robot);
+    _distancePid = new DistancePid(_robot);
     _distancePid.SetTargetDistance(24);
     _timer = new Timer();
     _timer.start();

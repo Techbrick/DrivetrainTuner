@@ -44,9 +44,9 @@ public class DriveDistanceAndDirection extends Command {
     SmartDashboard.putString("Status", "Running move " + Double.toString(_distance) + " inches, heading " + Double.toString(_heading) );
     testCompleted = false;
     stoppedCounter = 0;
-    _distancePid = new DistancePid(RobotMap.kdistance, 0, 0, RobotMap.minDrivePower, _robot.getPeriod(), RobotMap.pidTDistDeadband, _robot);
+    _distancePid = new DistancePid( _robot);
     _distancePid.SetTargetDistance(_distance);
-    _turnPid = new TurnPid(RobotMap.kp_Angle, 0, 0, RobotMap.minTurnPower, _robot.getPeriod(), RobotMap.pidTDistDeadband);
+    _turnPid = new TurnPid(_robot);
     _turnPid.SetTargetAngle(_heading);
   }
 

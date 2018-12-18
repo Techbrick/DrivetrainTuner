@@ -46,8 +46,7 @@ public class FindMinTurnPower extends Command {
   @Override
   protected void initialize() {
     _robot.navX.reset();
-    _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
-    _robot.rightMaster.setSelectedSensorPosition(0, 0, 10);
+    _robot.driveTrain.ResetEncoders();
     SmartDashboard.putString("Instructions", "The Robot will determine the min motor power to turn, press button 1 to end");
     SmartDashboard.putString("Status", "Running FindMinTurnPower");
     testPowerLevel = 2;
@@ -77,7 +76,7 @@ public class FindMinTurnPower extends Command {
         power = - power;
     }
     _robot.driveTrain.Move(power, -power);
-    int currentPosition = _robot.leftMaster.getSelectedSensorPosition(0);
+    double currentPosition = _robot.driveTrain.GetLeftEncoderPosition();
     if(Math.abs(currentPosition) > 200){
         if(!secondTurn){
             minLeftTurn = testPowerLevel/100.0;
@@ -96,7 +95,7 @@ public class FindMinTurnPower extends Command {
         powerLevelTimer = 0;
         testPowerLevel = 2;
         secondTurn = true;
-        _robot.leftMaster.setSelectedSensorPosition(0, 0, 10);
+        _robot.driveTrain.ResetEncoders();
     }else if(!moving){
 
         powerLevelTimer ++;
@@ -115,11 +114,11 @@ public class FindMinTurnPower extends Command {
     boolean done = _robot.stick.getRawButton(1) || testCompleted;
     if(done){
         if(minLeftTurn > minRightTurn){
-            RobotMap.minTurnPower = minLeftTurn;
+            _robot.robotMap.minTurnPower = minLeftTurn;
         }else{
-            RobotMap.minTurnPower = minRightTurn;
+            _robot.robotMap.minTurnPower = minRightTurn;
         }
-        SmartDashboard.putString("Status", "Determined Min Turn Power: "+ Double.toString(RobotMap.minTurnPower) + "%");
+        SmartDashboard.putString("Status", "Determined Min Turn Power: "+ Double.toString(_robot.robotMap.minTurnPower) + "%");
         _robot.driveTrain.Move(0.0,0.0);
         return true;
     }

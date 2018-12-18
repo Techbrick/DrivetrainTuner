@@ -4,8 +4,8 @@ import java.text.DecimalFormat;
 
 public class Helpers {
 
-    public static double  DeadbandJoystick(double value){
-        double deadband = RobotMap.joystickDeadband;
+    public static double  DeadbandJoystick(double value, RobotMap robotMap){
+        double deadband = robotMap.joystickDeadband;
         if (value >= deadband) 
         return value;
     

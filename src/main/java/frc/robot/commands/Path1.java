@@ -68,7 +68,7 @@ public class Path1 extends Command {
 // Max Jerk:            60.0 m/s/s/s
 
 
-Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_LOW, 0.02, Helpers.FeetToMeters(RobotMap.maxVelocity), Helpers.FeetToMeters(RobotMap.maxAccel), 60.0);
+Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_LOW, 0.02, Helpers.FeetToMeters(_robot.robotMap.maxVelocity), Helpers.FeetToMeters(_robot.robotMap.maxAccel), 60.0);
 SmartDashboard.putString("Status", "Running Path1 "  );
 
 // Generate the trajectory
@@ -77,15 +77,15 @@ SmartDashboard.putString("Status", "Running Path1 "  );
     testCompleted = false;
     stoppedCounter = 0;
    
-    _turnPid = new TurnPid(RobotMap.kp_Angle, 0, 0, RobotMap.minTurnPower, _robot.getPeriod(), RobotMap.pidTDistDeadband);
-    TankModifier mod = new TankModifier(trajectory).modify(Helpers.InchesToMeters(RobotMap.trackWidth));
+    _turnPid = new TurnPid(_robot);
+    TankModifier mod = new TankModifier(trajectory).modify(Helpers.InchesToMeters(_robot.robotMap.trackWidth));
     _leftTrajectory = mod.getLeftTrajectory();
     _rightTrajectory = mod.getRightTrajectory();
     _leftDistanceFollower = new DistanceFollower(_leftTrajectory);
     _rightDistanceFollower = new DistanceFollower(_rightTrajectory);
-    _leftDistanceFollower.configurePIDVA(RobotMap.KpDistanceFollower, 0.0, 0.0, Helpers.FeetToMeters(RobotMap.maxVelocity)/12.5, Helpers.FeetToMeters(RobotMap.maxAccel)/12.5);
+    _leftDistanceFollower.configurePIDVA(_robot.robotMap.KpDistanceFollower, 0.0, 0.0, Helpers.FeetToMeters(_robot.robotMap.maxVelocity)/12.5, Helpers.FeetToMeters(_robot.robotMap.maxAccel)/12.5);
     _leftDistanceFollower.reset();
-    _rightDistanceFollower.configurePIDVA(RobotMap.KpDistanceFollower, 0.0, 0.0, Helpers.FeetToMeters(RobotMap.maxVelocity)/12.5, Helpers.FeetToMeters(RobotMap.maxAccel)/12.5);
+    _rightDistanceFollower.configurePIDVA(_robot.robotMap.KpDistanceFollower, 0.0, 0.0, Helpers.FeetToMeters(_robot.robotMap.maxVelocity)/12.5, Helpers.FeetToMeters(_robot.robotMap.maxAccel)/12.5);
     _rightDistanceFollower.reset();
   }
 
@@ -93,8 +93,8 @@ SmartDashboard.putString("Status", "Running Path1 "  );
   @Override
   protected void execute() {
       if(_robot.stick.getRawButton(1)){
-        double lCurrentDistance = _robot.leftMaster.getSelectedSensorPosition(0)/RobotMap.driveEncoderTicksPerInch;
-        double rCurrentDistance = _robot.rightMaster.getSelectedSensorPosition(0)/RobotMap.driveEncoderTicksPerInch;
+        double lCurrentDistance = _robot.driveTrain.GetLeftEncoderPosition();
+        double rCurrentDistance = _robot.driveTrain.GetRightEncoderPosition();
         double leftPower = _leftDistanceFollower.calculate(Helpers.FeetToMeters(lCurrentDistance));
         double rightPower = _rightDistanceFollower.calculate(Helpers.FeetToMeters(rCurrentDistance));
         double targetHeading = _leftDistanceFollower.getHeading();

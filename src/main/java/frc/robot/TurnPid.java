@@ -14,8 +14,9 @@ public class TurnPid{
     private boolean start;
     private double _deadband;
     private double _targetAngle;
-
-    
+    private boolean _verbose;
+    private Robot _robot;
+    private double _maxPidPower;
 
     public TurnPid(double kp, double ki, double kd, double minTurnPower, double interval, double deadband){
         _kp = kp;
@@ -25,6 +26,21 @@ public class TurnPid{
         _interval = interval;
         _accumulatedI = 0;
         _deadband = deadband;
+        _maxPidPower = .5;
+        _verbose = false;
+        start = true;
+    }
+    public TurnPid(Robot robot){
+        _robot = robot;
+        _kp = _robot.robotMap.kp_Angle;
+        _ki = _robot.robotMap.ki_Angle;
+        _kd = _robot.robotMap.kd_Angle;
+        _minTurnPower = _robot.robotMap.minTurnPower;
+        _interval = _robot.robotMap.timingInterval;
+        _accumulatedI = 0;
+        _deadband = _robot.robotMap.pidTurnDeadband;
+        _verbose = _robot.robotMap.verbose;
+        _maxPidPower = _robot.robotMap.maxPidPower;
         start = true;
     }
 
@@ -41,7 +57,7 @@ public class TurnPid{
             SmartDashboard.putString("Pid t Status", "Started New PidTurn Class");
         }
         double angle_error = _targetAngle - currentAngle ; //calculate error
-        if(RobotMap.verbose){
+        if(_verbose){
             SmartDashboard.putNumber("TEST angle error", angle_error);
         }
         if(angle_error > 180){
@@ -53,7 +69,7 @@ public class TurnPid{
         // if (_targetAngle == 0 && currentAngle > 180) {
         //         angle_error = currentAngle - 360;
         // }
-        if(RobotMap.verbose){
+        if(_verbose){
             SmartDashboard.putNumber("TEST angle error corr", angle_error);
         }
         double p_Angle = _kp * angle_error; //calculate p
@@ -67,13 +83,13 @@ public class TurnPid{
         
         double angleOutput = p_Angle + i_Angle + d_Angle; //calculate output
         _lastError = angle_error; //set last angle error for d value
-        if(RobotMap.verbose){
+        if(_verbose){
             SmartDashboard.putNumber("TEST angle pwr Raw", angleOutput);
         }
       
       
         angleOutput = Math.abs(angleOutput) < _minTurnPower ? Math.copySign(_minTurnPower, angleOutput) : angleOutput; //if angleOutput is below min, set to min
-        angleOutput = Math.abs(angleOutput) > RobotMap.maxPidPower ? Math.copySign(RobotMap.maxPidPower, angleOutput) : angleOutput; //if angleOutput is above max, set to max
+        angleOutput = Math.abs(angleOutput) > _maxPidPower ? Math.copySign(_maxPidPower, angleOutput) : angleOutput; //if angleOutput is above max, set to max
         //angleOutput = angle_error < 0 ? angleOutput : -angleOutput;
         if (Math.abs(angle_error) < _deadband) { //if done moving
             i_Angle = 0;
@@ -81,7 +97,7 @@ public class TurnPid{
             SmartDashboard.putString("Pid t Status", "PidTurn Class completed");
         }
         //angleOutput = -angleOutput;
-        if(RobotMap.verbose){
+        if(_verbose){
             SmartDashboard.putNumber("TEST angle pwr ", angleOutput);
         }
       
